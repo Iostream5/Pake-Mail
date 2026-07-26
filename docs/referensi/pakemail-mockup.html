@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Pake Mail — UI Mockup</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap');
+
+:root{
+  --ink:#1C2135;
+  --ink-soft:#2A3050;
+  --canvas:#F0F1EC;
+  --surface:#FFFFFF;
+  --primary:#2E3A8C;
+  --primary-dark:#202A6B;
+  --primary-tint:#E7E9F5;
+  --accent:#E0A030;
+  --accent-dark:#7A5309;
+  --accent-tint:#FBEFD9;
+  --line:#DDE0D8;
+  --danger:#C2503E;
+  --danger-tint:#F7E7E4;
+  --danger-dark:#7A2E22;
+  --success:#3F8F5F;
+  --success-tint:#E4F0E8;
+  --success-dark:#215A38;
+  --text:#1C2135;
+  --text-2:#5B5F53;
+  --text-mute:#8B8E82;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;color:var(--text);background:var(--canvas);}
+h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+
+.shell{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:230px;background:var(--ink);color:#fff;flex-shrink:0;display:flex;flex-direction:column;padding:20px 0;}
+.brand{display:flex;align-items:center;gap:10px;padding:0 20px 22px 20px;}
+.brand-mark{width:30px;height:30px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.brand-mark svg{width:16px;height:16px;stroke:var(--ink);}
+.brand-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;letter-spacing:0.2px;}
+.brand-sub{font-size:10px;color:#9DA3C4;letter-spacing:1px;text-transform:uppercase;}
+nav{padding:0 10px;display:flex;flex-direction:column;gap:2px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:7px;color:#B9BEDA;font-size:13.5px;font-weight:500;background:transparent;border:none;text-align:left;width:100%;}
+.nav-item svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;}
+.nav-item:hover{background:rgba(255,255,255,0.06);color:#fff;}
+.nav-item.active{background:var(--primary);color:#fff;}
+.nav-foot{margin-top:auto;padding:16px 20px 4px;font-size:11px;color:#767C9E;border-top:1px solid rgba(255,255,255,0.08);margin-top:16px;padding-top:14px;}
+
+/* MAIN */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.topbar{padding:22px 32px 18px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--line);background:var(--surface);}
+.topbar h1{font-size:21px;font-weight:600;}
+.topbar p{font-size:13px;color:var(--text-2);margin-top:4px;}
+.content{padding:26px 32px 60px;flex:1;}
+.page{display:none;}
+.page.active{display:block;}
+
+.btn{border-radius:7px;padding:9px 15px;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--text);display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{border-color:var(--text-mute);}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.9;}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-dark);}
+.btn-ghost{border-color:transparent;background:transparent;}
+.btn-sm{padding:6px 10px;font-size:12px;}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:18px 20px;}
+.section-title{font-size:12.5px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:12px;}
+
+/* STAMP badge — signature element */
+.stamp{display:inline-flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:0.6px;text-transform:uppercase;padding:4px 10px;border-radius:20px;border:1.4px dashed currentColor;transform:rotate(-1.5deg);white-space:nowrap;}
+.stamp.draft{color:var(--text-mute);background:#F2F2EE;}
+.stamp.scheduled{color:var(--primary);background:var(--primary-tint);}
+.stamp.running{color:var(--accent-dark);background:var(--accent-tint);}
+.stamp.completed{color:var(--success-dark);background:var(--success-tint);}
+.stamp.failed{color:var(--danger-dark);background:var(--danger-tint);}
+.stamp.reply{color:var(--primary);background:var(--primary-tint);}
+.stamp.interview{color:var(--accent-dark);background:var(--accent-tint);}
+.stamp.applied{color:var(--text-2);background:#EDEEE7;}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.field label{font-size:12px;font-weight:500;color:var(--text-2);}
+.field input,.field select,.field textarea{border:1px solid var(--line);border-radius:7px;padding:9px 11px;font-size:13.5px;background:var(--surface);color:var(--text);}
+.field textarea{resize:vertical;min-height:70px;line-height:1.5;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--primary-tint);border-color:var(--primary);}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+.pill{display:inline-flex;align-items:center;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.pill-var{background:var(--accent-tint);color:var(--accent-dark);font-family:'IBM Plex Mono',monospace;}
+.pill-tag{background:#EDEEE7;color:var(--text-2);}
+
+.avatar{width:36px;height:36px;border-radius:9px;background:var(--primary-tint);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;}
+
+::-webkit-scrollbar{height:8px;width:8px;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 7l9 6 9-6M4 5h16v14H4z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div>
+        <div class="brand-name">Pake Mail</div>
+        <div class="brand-sub">Lamaran Kerja</div>
+      </div>
+    </div>
+    <nav id="navList">
+      <button class="nav-item active" data-page="akun" onclick="showPage('akun',this)">
+        <svg viewBox="0 0 24 24"><path d="M3 7l9 6 9-6M4 5h16v14H4z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Akun Email
+      </button>
+      <button class="nav-item" data-page="profil" onclick="showPage('profil',this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6" stroke-linecap="round"/></svg>
+        Profil
+      </button>
+      <button class="nav-item" data-page="dokumen" onclick="showPage('dokumen',this)">
+        <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z" stroke-linejoin="round"/><path d="M14 3v4h4M9 12h6M9 16h6" stroke-linecap="round"/></svg>
+        Dokumen
+      </button>
+      <button class="nav-item" data-page="template" onclick="showPage('template',this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Template Email
+      </button>
+      <button class="nav-item" data-page="perusahaan" onclick="showPage('perusahaan',this)">
+        <svg viewBox="0 0 24 24"><path d="M4 21V6l8-3 8 3v15" stroke-linejoin="round"/><path d="M9 21v-6h6v6M9 10h.01M15 10h.01M9 14h.01M15 14h.01" stroke-linecap="round"/></svg>
+        Perusahaan
+      </button>
+      <button class="nav-item" data-page="batch" onclick="showPage('batch',this)">
+        <svg viewBox="0 0 24 24"><path d="M22 2L11 13" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2l-7 20-4-9-9-4 20-7z" stroke-linejoin="round"/></svg>
+        Batch Lamaran
+      </button>
+    </nav>
+    <div class="nav-foot">Dimas Prasetyo<br>dimas.prasetyo@gmail.com</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ===================== AKUN EMAIL ===================== -->
+    <div id="page-akun" class="page active">
+      <div class="topbar">
+        <div>
+          <h1>Akun email</h1>
+          <p>Hubungkan akun pengirim untuk mulai mengirim lamaran.</p>
+        </div>
+        <button class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>Hubungkan akun Gmail</button>
+      </div>
+      <div class="content" style="display:flex;flex-direction:column;gap:12px;max-width:640px;">
+
+        <div class="card" style="display:flex;align-items:center;gap:14px;">
+          <div class="avatar">GK</div>
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:14px;">gmail_kerja@gmail.com</div>
+            <div style="font-size:12.5px;color:var(--text-2);margin-top:2px;">412 / 500 terkirim hari ini &middot; estimasi kuota Gmail API</div>
+          </div>
+          <span class="pill" style="background:var(--success-tint);color:var(--success-dark);">Default</span>
+          <button class="btn btn-sm btn-ghost">Putuskan</button>
+        </div>
+
+        <div class="card" style="display:flex;align-items:center;gap:14px;">
+          <div class="avatar" style="background:var(--accent-tint);color:var(--accent-dark);">GP</div>
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:14px;">gmail_pribadi@gmail.com</div>
+            <div style="font-size:12.5px;color:var(--text-2);margin-top:2px;">87 / 500 terkirim hari ini</div>
+          </div>
+          <button class="btn btn-sm">Jadikan default</button>
+          <button class="btn btn-sm btn-ghost">Putuskan</button>
+        </div>
+
+        <div class="card" style="display:flex;align-items:center;gap:14px;opacity:0.55;">
+          <div class="avatar" style="background:#EDEEE7;color:var(--text-mute);">O</div>
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:14px;">Outlook</div>
+            <div style="font-size:12.5px;color:var(--text-2);margin-top:2px;">Belum terhubung</div>
+          </div>
+          <span class="pill pill-tag">Segera hadir</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===================== PROFIL ===================== -->
+    <div id="page-profil" class="page">
+      <div class="topbar">
+        <div>
+          <h1>Profil</h1>
+          <p>Data ini otomatis mengisi variable di template email kamu.</p>
+        </div>
+        <button class="btn btn-primary">Simpan perubahan</button>
+      </div>
+      <div class="content" style="display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start;">
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card">
+            <div class="section-title">Data pribadi</div>
+            <div class="two-col">
+              <div class="field"><label>Nama lengkap</label><input value="Dimas Prasetyo"></div>
+              <div class="field"><label>Tanggal lahir</label><input value="14 Maret 2001"></div>
+            </div>
+            <div class="field"><label>Alamat</label><input value="Jl. Kemakmuran No. 12, Bekasi Timur"></div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">Kontak</div>
+            <div class="two-col">
+              <div class="field"><label>Email</label><input value="dimas.prasetyo@gmail.com"></div>
+              <div class="field"><label>Nomor telepon</label><input value="+62 812-3456-7890"></div>
+              <div class="field"><label>LinkedIn</label><input value="linkedin.com/in/dimasprasetyo"></div>
+              <div class="field"><label>Portfolio</label><input value="dimasprasetyo.dev"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">Pendidikan</div>
+            <div class="two-col">
+              <div class="field"><label>Institusi</label><input value="Universitas Trisakti"></div>
+              <div class="field"><label>Jurusan</label><input value="Teknik Informatika"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">Pengalaman</div>
+            <div class="two-col">
+              <div class="field"><label>Perusahaan</label><input value="PT Digital Nusantara"></div>
+              <div class="field"><label>Posisi</label><input value="Frontend Developer Intern"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="position:sticky;top:20px;">
+          <div class="section-title">Variable tersedia</div>
+          <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Gunakan di Template Email.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span class="pill pill-var">{{full_name}}</span>
+            <span class="pill pill-var">{{phone}}</span>
+            <span class="pill pill-var">{{email}}</span>
+            <span class="pill pill-var">{{portfolio}}</span>
+            <span class="pill pill-var">{{education}}</span>
+            <span class="pill pill-var">{{experience}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== DOKUMEN ===================== -->
+    <div id="page-dokumen" class="page">
+      <div class="topbar">
+        <div>
+          <h1>Dokumen</h1>
+          <p>Simpan sekali, pakai di banyak batch lamaran.</p>
+        </div>
+        <button class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>Upload dokumen</button>
+      </div>
+      <div class="content">
+        <div style="display:flex;gap:8px;margin-bottom:18px;">
+          <button class="btn btn-sm" style="background:var(--ink);color:#fff;border-color:var(--ink);">Semua</button>
+          <button class="btn btn-sm">CV</button>
+          <button class="btn btn-sm">Portfolio</button>
+          <button class="btn btn-sm">Ijazah</button>
+          <button class="btn btn-sm">SKCK</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;">
+
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div class="avatar" style="border-radius:8px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div>
+              <span class="pill pill-tag">CV</span>
+            </div>
+            <div style="font-weight:500;font-size:13.5px;">CV Frontend.pdf</div>
+            <div style="font-size:11.5px;color:var(--text-mute);margin-top:3px;">312 KB &middot; diperbarui 3 hari lalu</div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div class="avatar" style="border-radius:8px;background:var(--accent-tint);color:var(--accent-dark);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div>
+              <span class="pill pill-tag">CV</span>
+            </div>
+            <div style="font-weight:500;font-size:13.5px;">CV Operator.pdf</div>
+            <div style="font-size:11.5px;color:var(--text-mute);margin-top:3px;">298 KB &middot; diperbarui 2 minggu lalu</div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div class="avatar" style="border-radius:8px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div>
+              <span class="pill pill-tag">Portfolio</span>
+            </div>
+            <div style="font-weight:500;font-size:13.5px;">Portfolio 2026.pdf</div>
+            <div style="font-size:11.5px;color:var(--text-mute);margin-top:3px;">1.4 MB &middot; diperbarui hari ini</div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div class="avatar" style="border-radius:8px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div>
+              <span class="pill pill-tag">Ijazah</span>
+            </div>
+            <div style="font-weight:500;font-size:13.5px;">Ijazah S1.pdf</div>
+            <div style="font-size:11.5px;color:var(--text-mute);margin-top:3px;">870 KB &middot; diperbarui 1 bulan lalu</div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div class="avatar" style="border-radius:8px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg></div>
+              <span class="pill pill-tag">SKCK</span>
+            </div>
+            <div style="font-weight:500;font-size:13.5px;">SKCK Aktif.pdf</div>
+            <div style="font-size:11.5px;color:var(--text-mute);margin-top:3px;">640 KB &middot; diperbarui 2 bulan lalu</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== TEMPLATE EMAIL ===================== -->
+    <div id="page-template" class="page">
+      <div class="topbar">
+        <div>
+          <h1>Template email</h1>
+          <p>Susun sekali, pakai berulang dengan variable dinamis.</p>
+        </div>
+        <button class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>Template baru</button>
+      </div>
+      <div class="content" style="display:grid;grid-template-columns:230px 1fr;gap:20px;">
+
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="card" style="padding:10px 12px;border-color:var(--primary);background:var(--primary-tint);">
+            <div style="font-weight:500;font-size:13px;color:var(--primary-dark);">Fresh Graduate</div>
+            <div style="font-size:11.5px;color:var(--primary);margin-top:2px;">Dipakai di 3 batch</div>
+          </div>
+          <div class="card" style="padding:10px 12px;">
+            <div style="font-weight:500;font-size:13px;">Follow Up Frontend</div>
+            <div style="font-size:11.5px;color:var(--text-mute);margin-top:2px;">Dipakai di 1 batch</div>
+          </div>
+          <div class="card" style="padding:10px 12px;">
+            <div style="font-weight:500;font-size:13px;">Proposal Freelance</div>
+            <div style="font-size:11.5px;color:var(--text-mute);margin-top:2px;">Belum dipakai</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-weight:600;font-family:'Space Grotesk',sans-serif;font-size:15px;">Fresh Graduate</div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-sm">Clone</button>
+              <button class="btn btn-sm">Preview</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Subject</label>
+            <input value="Lamaran Kerja — {{position}} — {{full_name}}">
+          </div>
+          <div class="field">
+            <label>Body</label>
+            <textarea style="min-height:150px;">Halo Tim HRD {{company}},
+
+Perkenalkan saya {{full_name}}, lulusan {{education}}. Saya tertarik melamar posisi {{position}} yang sedang dibuka.
+
+Terlampir CV dan portfolio saya untuk pertimbangan lebih lanjut.</textarea>
+          </div>
+          <div class="field">
+            <label>Penutup</label>
+            <textarea style="min-height:70px;">Hormat saya,
+{{full_name}}
+{{phone}} | {{portfolio}}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PERUSAHAAN ===================== -->
+    <div id="page-perusahaan" class="page">
+      <div class="topbar">
+        <div>
+          <h1>Perusahaan</h1>
+          <p>Database perusahaan tujuan lamaran kamu.</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn"><svg viewBox="0 0 24 24"><path d="M12 5v10m0 0l-4-4m4 4l4-4M5 19h14" stroke-linecap="round" stroke-linejoin="round"/></svg>Import CSV</button>
+          <button class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>Tambah perusahaan</button>
+        </div>
+      </div>
+      <div class="content">
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <input placeholder="Cari nama perusahaan atau posisi" style="border:1px solid var(--line);border-radius:7px;padding:9px 12px;font-size:13px;width:260px;background:var(--surface);">
+          <button class="btn btn-sm">Filter</button>
+          <button class="btn btn-sm">Export</button>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr 1.2fr;padding:11px 18px;font-size:11.5px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.3px;border-bottom:1px solid var(--line);background:#F7F7F3;">
+            <div>Perusahaan</div><div>Posisi</div><div>Lokasi</div><div>Status</div><div>Tag</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr 1.2fr;padding:13px 18px;align-items:center;border-bottom:1px solid var(--line);font-size:13.5px;">
+            <div style="font-weight:500;">PT Astra International</div>
+            <div style="color:var(--text-2);">Operator Produksi</div>
+            <div style="color:var(--text-2);">Bekasi</div>
+            <div><span class="stamp applied">Applied</span></div>
+            <div><span class="pill pill-tag">Manufaktur</span></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr 1.2fr;padding:13px 18px;align-items:center;border-bottom:1px solid var(--line);font-size:13.5px;background:var(--accent-tint);">
+            <div style="font-weight:500;">PT Digital Nusantara</div>
+            <div style="color:var(--text-2);">Frontend Developer</div>
+            <div style="color:var(--text-2);">Jakarta</div>
+            <div><span class="stamp interview">Interview</span></div>
+            <div style="display:flex;align-items:center;gap:6px;"><span class="pill pill-tag">Tech</span><span style="font-size:11px;color:var(--accent-dark);">&#9679; duplikat terdeteksi</span></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr 1.2fr;padding:13px 18px;align-items:center;border-bottom:1px solid var(--line);font-size:13.5px;">
+            <div style="font-weight:500;">PT Karawang Presisi</div>
+            <div style="color:var(--text-2);">Quality Assurance</div>
+            <div style="color:var(--text-2);">Karawang</div>
+            <div><span class="stamp reply">Reply</span></div>
+            <div><span class="pill pill-tag">Manufaktur</span></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr 1.2fr;padding:13px 18px;align-items:center;font-size:13.5px;">
+            <div style="font-weight:500;">PT Sinergi Kreasi</div>
+            <div style="color:var(--text-2);">UI/UX Designer</div>
+            <div style="color:var(--text-2);">Bandung</div>
+            <div><span class="stamp draft">Draft</span></div>
+            <div><span class="pill pill-tag">Tech</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== BATCH LAMARAN ===================== -->
+    <div id="page-batch" class="page">
+      <div class="topbar">
+        <div>
+          <h1>Batch lamaran</h1>
+          <p>Pusat orkestrasi pengiriman lamaran kamu.</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm batch-tab active" onclick="showBatchTab('wizard',this)">Buat batch baru</button>
+          <button class="btn btn-sm batch-tab" onclick="showBatchTab('monitor',this)">Monitoring</button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- WIZARD -->
+        <div id="batch-wizard" class="batch-tab-panel">
+          <div style="display:flex;gap:4px;margin-bottom:22px;overflow-x:auto;">
+            <div class="wz-step" data-step="1" onclick="showWizStep(1,this)">1 &middot; Nama</div>
+            <div class="wz-step" data-step="2" onclick="showWizStep(2,this)">2 &middot; Akun email</div>
+            <div class="wz-step" data-step="3" onclick="showWizStep(3,this)">3 &middot; Template</div>
+            <div class="wz-step" data-step="4" onclick="showWizStep(4,this)">4 &middot; Dokumen</div>
+            <div class="wz-step" data-step="5" onclick="showWizStep(5,this)">5 &middot; Perusahaan</div>
+            <div class="wz-step active" data-step="6" onclick="showWizStep(6,this)">6 &middot; Jadwal</div>
+            <div class="wz-step" data-step="7" onclick="showWizStep(7,this)">7 &middot; Preview</div>
+          </div>
+
+          <div class="card" style="max-width:600px;">
+            <div class="section-title" style="margin-bottom:4px;">Langkah 6 — Atur jadwal</div>
+            <p style="font-size:12.5px;color:var(--text-2);margin-bottom:18px;">Delay antar email membantu menjaga akun kamu tidak kena flag spam.</p>
+
+            <div class="two-col">
+              <div class="field"><label>Mulai kirim</label><select><option>Sekarang</option><option selected>Jadwalkan</option></select></div>
+              <div class="field"><label>Tanggal &amp; jam mulai</label><input value="28 Jul 2026, 08:00"></div>
+            </div>
+            <div class="two-col">
+              <div class="field"><label>Delay antar email</label><input value="45 detik"></div>
+              <div class="field"><label>Jam aktif</label><input value="08:00 — 17:00"></div>
+            </div>
+            <div class="field">
+              <label>Hari aktif</label>
+              <div style="display:flex;gap:6px;">
+                <span class="pill" style="background:var(--primary);color:#fff;">Sen</span>
+                <span class="pill" style="background:var(--primary);color:#fff;">Sel</span>
+                <span class="pill" style="background:var(--primary);color:#fff;">Rab</span>
+                <span class="pill" style="background:var(--primary);color:#fff;">Kam</span>
+                <span class="pill" style="background:var(--primary);color:#fff;">Jum</span>
+                <span class="pill pill-tag">Sab</span>
+                <span class="pill pill-tag">Min</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:20px;">
+              <button class="btn" onclick="showWizStep(5,document.querySelector('.wz-step[data-step=\'5\']'))">Kembali</button>
+              <button class="btn btn-primary" onclick="showWizStep(7,document.querySelector('.wz-step[data-step=\'7\']'))">Lanjut ke preview</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MONITORING -->
+        <div id="batch-monitor" class="batch-tab-panel" style="display:none;">
+
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;">
+            <div class="card" style="display:flex;align-items:center;gap:16px;">
+              <div style="flex:1;">
+                <div style="font-weight:500;font-size:14px;">Operator Bekasi</div>
+                <div style="font-size:12px;color:var(--text-mute);margin-top:2px;">120 perusahaan &middot; gmail_kerja</div>
+              </div>
+              <span class="stamp running">Running</span>
+              <div style="width:140px;height:6px;background:#EDEEE7;border-radius:4px;overflow:hidden;"><div style="width:64%;height:100%;background:var(--accent);"></div></div>
+              <div style="font-size:12px;color:var(--text-2);width:40px;">64%</div>
+            </div>
+            <div class="card" style="display:flex;align-items:center;gap:16px;opacity:0.75;">
+              <div style="flex:1;">
+                <div style="font-weight:500;font-size:14px;">Frontend Jakarta</div>
+                <div style="font-size:12px;color:var(--text-mute);margin-top:2px;">35 perusahaan &middot; gmail_kerja</div>
+              </div>
+              <span class="stamp completed">Completed</span>
+              <div style="width:140px;height:6px;background:#EDEEE7;border-radius:4px;overflow:hidden;"><div style="width:100%;height:100%;background:var(--success);"></div></div>
+              <div style="font-size:12px;color:var(--text-2);width:40px;">100%</div>
+            </div>
+            <div class="card" style="display:flex;align-items:center;gap:16px;opacity:0.75;">
+              <div style="flex:1;">
+                <div style="font-weight:500;font-size:14px;">QA Karawang</div>
+                <div style="font-size:12px;color:var(--text-mute);margin-top:2px;">60 perusahaan &middot; gmail_pribadi</div>
+              </div>
+              <span class="stamp scheduled">Scheduled</span>
+              <div style="width:140px;height:6px;background:#EDEEE7;border-radius:4px;overflow:hidden;"><div style="width:0%;height:100%;background:var(--primary);"></div></div>
+              <div style="font-size:12px;color:var(--text-2);width:40px;">0%</div>
+            </div>
+          </div>
+
+          <div class="section-title">Detail — Operator Bekasi</div>
+          <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px;">
+            <div class="card" style="padding:12px;"><div style="font-size:11px;color:var(--text-mute);">Sent</div><div style="font-size:19px;font-weight:600;font-family:'Space Grotesk',sans-serif;">72</div></div>
+            <div class="card" style="padding:12px;"><div style="font-size:11px;color:var(--text-mute);">Pending</div><div style="font-size:19px;font-weight:600;font-family:'Space Grotesk',sans-serif;">38</div></div>
+            <div class="card" style="padding:12px;"><div style="font-size:11px;color:var(--text-mute);">Retry</div><div style="font-size:19px;font-weight:600;font-family:'Space Grotesk',sans-serif;">4</div></div>
+            <div class="card" style="padding:12px;"><div style="font-size:11px;color:var(--text-mute);">Failed</div><div style="font-size:19px;font-weight:600;color:var(--danger);font-family:'Space Grotesk',sans-serif;">3</div></div>
+            <div class="card" style="padding:12px;"><div style="font-size:11px;color:var(--text-mute);">Reply</div><div style="font-size:19px;font-weight:600;color:var(--primary);font-family:'Space Grotesk',sans-serif;">6</div></div>
+            <div class="card" style="padding:12px;"><div style="font-size:11px;color:var(--text-mute);">ETA</div><div style="font-size:19px;font-weight:600;font-family:'Space Grotesk',sans-serif;">42m</div></div>
+          </div>
+
+          <div class="card" style="padding:0;overflow:hidden;">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;padding:10px 18px;font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.3px;border-bottom:1px solid var(--line);background:#F7F7F3;">
+              <div>Perusahaan</div><div>Waktu</div><div>Status</div><div>Log</div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;padding:11px 18px;align-items:center;border-bottom:1px solid var(--line);font-size:13px;">
+              <div>PT Astra International</div>
+              <div class="mono" style="font-size:11.5px;color:var(--text-mute);">08:41:02</div>
+              <div><span class="stamp completed">Sent</span></div>
+              <div class="mono" style="font-size:11.5px;color:var(--text-mute);">200 OK</div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;padding:11px 18px;align-items:center;border-bottom:1px solid var(--line);font-size:13px;">
+              <div>PT Cipta Logam</div>
+              <div class="mono" style="font-size:11.5px;color:var(--text-mute);">08:41:47</div>
+              <div><span class="stamp failed">Failed</span></div>
+              <div class="mono" style="font-size:11.5px;color:var(--danger);">550 mailbox not found</div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;padding:11px 18px;align-items:center;font-size:13px;">
+              <div>PT Wira Sentosa</div>
+              <div class="mono" style="font-size:11.5px;color:var(--text-mute);">08:42:33</div>
+              <div><span class="stamp running">Retry 1/2</span></div>
+              <div class="mono" style="font-size:11.5px;color:var(--text-mute);">timeout, mengulang</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<style>
+.wz-step{padding:8px 13px;border-radius:20px;font-size:12px;font-weight:500;color:var(--text-mute);background:#EDEEE7;white-space:nowrap;cursor:pointer;}
+.wz-step.active{background:var(--primary);color:#fff;}
+.batch-tab{background:var(--surface);}
+.batch-tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+</style>
+
+<script>
+function showPage(id, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+}
+function showBatchTab(id, el){
+  document.querySelectorAll('.batch-tab-panel').forEach(p=>p.style.display='none');
+  document.getElementById('batch-'+id).style.display='block';
+  document.querySelectorAll('.batch-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+function showWizStep(n, el){
+  document.querySelectorAll('.wz-step').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+
+</body>
+</html>

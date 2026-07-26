@@ -1,0 +1,155 @@
+erDiagram
+    USER ||--o{ EMAIL_ACCOUNT : connects
+    USER ||--|| PROFILE : has
+    PROFILE ||--o{ EDUCATION : includes
+    PROFILE ||--o{ EXPERIENCE : includes
+    USER ||--o{ DOCUMENT : uploads
+    USER ||--o{ EMAIL_TEMPLATE : creates
+    USER ||--o{ RECIPIENT : manages
+    USER ||--o{ BATCH : creates
+    USER ||--o{ ACTIVITY_LOG : generates
+
+    EMAIL_ACCOUNT ||--o{ BATCH : "sends via"
+    EMAIL_TEMPLATE ||--o{ BATCH : "used in"
+
+    BATCH ||--o{ BATCH_DOCUMENT : attaches
+    DOCUMENT ||--o{ BATCH_DOCUMENT : "attached in"
+
+    BATCH ||--o{ BATCH_RECIPIENT : contains
+    RECIPIENT ||--o{ BATCH_RECIPIENT : "targeted in"
+
+    BATCH ||--o{ ACTIVITY_LOG : "logged in"
+    BATCH_RECIPIENT ||--o{ ACTIVITY_LOG : "logged in"
+
+    USER {
+        uuid id PK
+        string email
+        string password_hash
+        string name
+        datetime created_at
+    }
+
+    EMAIL_ACCOUNT {
+        uuid id PK
+        uuid user_id FK
+        enum provider "gmail, outlook"
+        string email
+        text oauth_token_encrypted
+        boolean is_default
+        int daily_limit
+        datetime connected_at
+    }
+
+    PROFILE {
+        uuid id PK
+        uuid user_id FK
+        string full_name
+        string phone
+        string email
+        string linkedin_url
+        string portfolio_url
+        string address
+        date birth_date
+    }
+
+    EDUCATION {
+        uuid id PK
+        uuid profile_id FK
+        string institution
+        string degree
+        string major
+        int start_year
+        int end_year
+    }
+
+    EXPERIENCE {
+        uuid id PK
+        uuid profile_id FK
+        string company
+        string position
+        date start_date
+        date end_date
+        text description
+    }
+
+    DOCUMENT {
+        uuid id PK
+        uuid user_id FK
+        string name
+        enum category "CV, Portfolio, Ijazah, SKCK, Transkrip, Other"
+        string file_url
+        int file_size_kb
+        int version
+        datetime created_at
+        datetime updated_at
+    }
+
+    EMAIL_TEMPLATE {
+        uuid id PK
+        uuid user_id FK
+        string name
+        string subject
+        text body
+        text closing
+        boolean is_favorite
+        datetime created_at
+    }
+
+    RECIPIENT {
+        uuid id PK
+        uuid user_id FK
+        string company_name
+        string hr_email
+        string position
+        string location
+        string website
+        string source
+        text notes
+        string tags
+        datetime created_at
+    }
+
+    BATCH {
+        uuid id PK
+        uuid user_id FK
+        uuid email_account_id FK
+        uuid template_id FK
+        string name
+        text description
+        enum status "Draft, Scheduled, Running, Paused, Completed, Stopped, Failed"
+        datetime scheduled_at
+        int delay_seconds
+        time active_hours_start
+        time active_hours_end
+        string active_days
+        int retry_max
+        float auto_stop_threshold
+        datetime created_at
+    }
+
+    BATCH_DOCUMENT {
+        uuid id PK
+        uuid batch_id FK
+        uuid document_id FK
+    }
+
+    BATCH_RECIPIENT {
+        uuid id PK
+        uuid batch_id FK
+        uuid recipient_id FK
+        enum status "Pending, Sent, Failed, Skipped, Retry, Applied, Reply, Interview, TechnicalTest, HRInterview, Offering, Accepted"
+        datetime sent_at
+        text error_log
+        int retry_count
+        datetime updated_at
+    }
+
+    ACTIVITY_LOG {
+        uuid id PK
+        uuid user_id FK
+        uuid batch_id FK
+        uuid batch_recipient_id FK
+        string event_type
+        text message
+        datetime created_at
+    }
