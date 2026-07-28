@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog } from "@/components/ui/dialog"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { toast } from "sonner"
+import { TemplatesSkeleton } from "@/components/ui/skeleton"
 
 interface Template {
   id: string
@@ -40,6 +43,9 @@ export function TemplateList() {
   const [saving, setSaving] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [previewData, setPreviewData] = useState<Template | null>(null)
+
+  // Confirm Delete
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -81,8 +87,10 @@ export function TemplateList() {
       if (!res.ok) throw new Error("Failed to save")
       resetForm()
       await fetchTemplates()
+      toast.success(editingId ? "Template berhasil diperbarui!" : "Template baru berhasil disimpan!")
     } catch {
       setError("Gagal menyimpan template")
+      toast.error("Gagal menyimpan template")
     } finally {
       setSaving(false)
     }
@@ -98,8 +106,10 @@ export function TemplateList() {
       })
       if (!res.ok) throw new Error("Failed to clone")
       await fetchTemplates()
+      toast.success("Template berhasil diclone!")
     } catch {
       setError("Gagal meng-clone template")
+      toast.error("Gagal meng-clone template")
     }
   }
 
@@ -109,8 +119,10 @@ export function TemplateList() {
       const res = await fetch(`/api/templates?id=${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Failed to delete")
       await fetchTemplates()
+      toast.success("Template berhasil dihapus!")
     } catch {
       setError("Gagal menghapus template")
+      toast.error("Gagal menghapus template")
     }
   }
 
@@ -124,8 +136,10 @@ export function TemplateList() {
       })
       if (!res.ok) throw new Error("Failed to update")
       await fetchTemplates()
+      toast.success(t.isFavorite ? "Dihapus dari favorit" : "Ditambahkan ke favorit!")
     } catch {
       setError("Gagal mengupdate template")
+      toast.error("Gagal mengupdate template")
     }
   }
 
@@ -162,20 +176,8 @@ export function TemplateList() {
   const favorites = templates.filter((t) => t.isFavorite)
   const others = templates.filter((t) => !t.isFavorite)
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-4">
-              <div className="h-4 w-2/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-              <div className="mt-2 h-3 w-full animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
-              <div className="mt-2 h-3 w-3/4 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
+  if (loading && templates.length === 0) {
+    return <TemplatesSkeleton />
   }
 
   return (
@@ -203,17 +205,27 @@ export function TemplateList() {
         className="max-w-2xl"
       >
         <div className="space-y-4">
-          <Input
-            label="Nama Template"
-            value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-            placeholder="Mis: Lamaran Frontend"
-          />
+          <div className="relative">
+            <Input
+              label={`Nama Template (${form.name.length}/50)`}
+              value={form.name}
+              onChange={(e) => {
+                if (e.target.value.length <= 50) {
+                  setForm((p) => ({ ...p, name: e.target.value }))
+                }
+              }}
+              placeholder="Mis: Lamaran Frontend"
+            />
+          </div>
           <div>
             <Input
-              label="Subject Email"
+              label={`Subject Email (${form.subject.length}/100)`}
               value={form.subject}
-              onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))}
+              onChange={(e) => {
+                if (e.target.value.length <= 100) {
+                  setForm((p) => ({ ...p, subject: e.target.value }))
+                }
+              }}
               placeholder="Lamaran {{position}} - {{full_name}}"
             />
             <div className="mt-1 flex flex-wrap gap-1">
@@ -231,9 +243,13 @@ export function TemplateList() {
           </div>
           <div>
             <Textarea
-              label="Body Email"
+              label={`Body Email (${form.body.length}/5000)`}
               value={form.body}
-              onChange={(e) => setForm((p) => ({ ...p, body: e.target.value }))}
+              onChange={(e) => {
+                if (e.target.value.length <= 5000) {
+                  setForm((p) => ({ ...p, body: e.target.value }))
+                }
+              }}
               rows={8}
               placeholder="Tulis body email di sini... Gunakan variable seperti {{company}}"
               className="font-mono"
@@ -308,6 +324,17 @@ export function TemplateList() {
         </div>
       )}
 
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={deleteTargetId !== null}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={async () => {
+          if (deleteTargetId) await handleDelete(deleteTargetId)
+        }}
+        title="HAPUS TEMPLATE EMAIL"
+        description="Apakah Anda yakin ingin menghapus template ini? Tindakan ini tidak dapat dibatalkan."
+      />
+
       {/* All Templates */}
       <div>
         <h2 className="mb-3 text-sm font-semibold text-zinc-500 uppercase tracking-wide">Semua Template</h2>
@@ -357,7 +384,7 @@ export function TemplateList() {
               variant="ghost"
               size="sm"
               className="text-red-600 hover:text-red-700"
-              onClick={() => handleDelete(t.id)}
+              onClick={() => setDeleteTargetId(t.id)}
             >
               Hapus
             </Button>

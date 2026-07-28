@@ -65,6 +65,20 @@ export function BatchWizard() {
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([])
   const [recipientSearch, setRecipientSearch] = useState("")
 
+  // Unsaved Changes Safety Net
+  const isFormDirty = name.trim().length > 0 || description.trim().length > 0 || selectedAccount !== "" || selectedTemplate !== "" || selectedDocs.length > 0 || selectedRecipients.length > 0
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isFormDirty && !submitting) {
+        e.preventDefault()
+        e.returnValue = "Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman?"
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [isFormDirty, submitting])
+
   // Step 6
   const [scheduledAt, setScheduledAt] = useState("")
   const [delaySeconds, setDelaySeconds] = useState(60)

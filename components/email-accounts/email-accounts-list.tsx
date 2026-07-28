@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { toast } from "sonner"
 
 interface EmailAccount {
   id: string
@@ -19,6 +21,9 @@ export function EmailAccountsList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [connecting, setConnecting] = useState(false)
+
+  // Confirm Disconnect
+  const [disconnectTargetId, setDisconnectTargetId] = useState<string | null>(null)
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -58,10 +63,12 @@ export function EmailAccountsList() {
         setError("")
         fetchAccounts()
         setConnecting(false)
+        toast.success("Akun Gmail berhasil dihubungkan!")
       } else if (e.data?.type === "oauth-error") {
         window.removeEventListener("message", handleMessage)
         setError("Gagal menghubungkan akun Gmail")
         setConnecting(false)
+        toast.error("Gagal menghubungkan akun Gmail")
       }
     }
 
@@ -85,8 +92,10 @@ export function EmailAccountsList() {
       })
       if (!res.ok) throw new Error("Failed to set default")
       await fetchAccounts()
+      toast.success("Akun email default diperbarui!")
     } catch {
       setError("Gagal mengatur akun default")
+      toast.error("Gagal mengatur akun default")
     }
   }
 
@@ -102,8 +111,10 @@ export function EmailAccountsList() {
         throw new Error(err.error || "Gagal memutus koneksi")
       }
       await fetchAccounts()
+      toast.success("Koneksi email berhasil diputus!")
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal memutus koneksi")
+      toast.error(e instanceof Error ? e.message : "Gagal memutus koneksi")
     }
   }
 
@@ -152,6 +163,17 @@ export function EmailAccountsList() {
         </p>
       </div>
 
+      {/* Confirm Disconnect Dialog */}
+      <ConfirmDialog
+        open={disconnectTargetId !== null}
+        onClose={() => setDisconnectTargetId(null)}
+        onConfirm={async () => {
+          if (disconnectTargetId) await handleDelete(disconnectTargetId)
+        }}
+        title="PUTUSKAN KONEKSI EMAIL"
+        description="Apakah Anda yakin ingin memutuskan koneksi akun email ini? Anda tidak akan bisa menggunakannya lagi untuk batch lamaran kecuali dihubungkan kembali."
+      />
+
       {/* Account List */}
       {accounts.length === 0 ? (
         <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
@@ -196,7 +218,7 @@ export function EmailAccountsList() {
                       variant="ghost"
                       size="sm"
                       className="text-red-600 hover:text-red-700"
-                      onClick={() => handleDelete(account.id)}
+                      onClick={() => setDisconnectTargetId(account.id)}
                     >
                       Putuskan
                     </Button>
