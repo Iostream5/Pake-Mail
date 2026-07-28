@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { toast } from "sonner"
 
 interface Education {
   id: string
@@ -59,6 +61,10 @@ export function ProfileForm() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
+  // Confirm Delete Targets
+  const [deleteEduId, setDeleteEduId] = useState<string | null>(null)
+  const [deleteExpId, setDeleteExpId] = useState<string | null>(null)
+
   const fetchProfile = useCallback(async () => {
     try {
       setLoading(true)
@@ -101,9 +107,11 @@ export function ProfileForm() {
       })
       if (!res.ok) throw new Error("Failed to save")
       setSuccess("Profil berhasil disimpan")
+      toast.success("Informasi pribadi berhasil disimpan!")
       await fetchProfile()
     } catch {
       setError("Gagal menyimpan profil")
+      toast.error("Gagal menyimpan profil")
     } finally {
       setSaving(false)
     }
@@ -126,8 +134,10 @@ export function ProfileForm() {
       setShowEduForm(false)
       setEditingEdu(null)
       await fetchProfile()
+      toast.success("Data pendidikan berhasil ditambahkan!")
     } catch {
       setError("Gagal menambah pendidikan")
+      toast.error("Gagal menambah pendidikan")
     }
   }
 
@@ -144,8 +154,10 @@ export function ProfileForm() {
       setShowEduForm(false)
       setEditingEdu(null)
       await fetchProfile()
+      toast.success("Data pendidikan berhasil diperbarui!")
     } catch {
       setError("Gagal mengupdate pendidikan")
+      toast.error("Gagal mengupdate pendidikan")
     }
   }
 
@@ -155,8 +167,10 @@ export function ProfileForm() {
       const res = await fetch(`/api/profile/education?id=${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Failed to delete")
       await fetchProfile()
+      toast.success("Data pendidikan berhasil dihapus!")
     } catch {
       setError("Gagal menghapus pendidikan")
+      toast.error("Gagal menghapus pendidikan")
     }
   }
 
@@ -177,8 +191,10 @@ export function ProfileForm() {
       setShowExpForm(false)
       setEditingExp(null)
       await fetchProfile()
+      toast.success("Pengalaman kerja berhasil ditambahkan!")
     } catch {
       setError("Gagal menambah pengalaman")
+      toast.error("Gagal menambah pengalaman")
     }
   }
 
@@ -195,8 +211,10 @@ export function ProfileForm() {
       setShowExpForm(false)
       setEditingExp(null)
       await fetchProfile()
+      toast.success("Pengalaman kerja berhasil diperbarui!")
     } catch {
       setError("Gagal mengupdate pengalaman")
+      toast.error("Gagal mengupdate pengalaman")
     }
   }
 
@@ -206,8 +224,10 @@ export function ProfileForm() {
       const res = await fetch(`/api/profile/experience?id=${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Failed to delete")
       await fetchProfile()
+      toast.success("Pengalaman kerja berhasil dihapus!")
     } catch {
       setError("Gagal menghapus pengalaman")
+      toast.error("Gagal menghapus pengalaman")
     }
   }
 
@@ -232,6 +252,27 @@ export function ProfileForm() {
 
   return (
     <div className="space-y-8">
+      {/* Confirm Delete Education Dialog */}
+      <ConfirmDialog
+        open={deleteEduId !== null}
+        onClose={() => setDeleteEduId(null)}
+        onConfirm={async () => {
+          if (deleteEduId) await handleDeleteEducation(deleteEduId)
+        }}
+        title="HAPUS RIWAYAT PENDIDIKAN"
+        description="Apakah Anda yakin ingin menghapus data pendidikan ini? Tindakan ini tidak dapat dibatalkan."
+      />
+
+      {/* Confirm Delete Experience Dialog */}
+      <ConfirmDialog
+        open={deleteExpId !== null}
+        onClose={() => setDeleteExpId(null)}
+        onConfirm={async () => {
+          if (deleteExpId) await handleDeleteExperience(deleteExpId)
+        }}
+        title="HAPUS PENGALAMAN KERJA"
+        description="Apakah Anda yakin ingin menghapus data pengalaman kerja ini? Tindakan ini tidak dapat dibatalkan."
+      />
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
           {error}
@@ -396,7 +437,7 @@ export function ProfileForm() {
                     variant="ghost"
                     size="sm"
                     className="text-red-600 hover:text-red-700"
-                    onClick={() => handleDeleteEducation(edu.id)}
+                    onClick={() => setDeleteEduId(edu.id)}
                   >
                     Hapus
                   </Button>
@@ -511,7 +552,7 @@ export function ProfileForm() {
                     variant="ghost"
                     size="sm"
                     className="text-red-600 hover:text-red-700"
-                    onClick={() => handleDeleteExperience(exp.id)}
+                    onClick={() => setDeleteExpId(exp.id)}
                   >
                     Hapus
                   </Button>

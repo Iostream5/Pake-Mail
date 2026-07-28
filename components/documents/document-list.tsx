@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { toast } from "sonner"
+import { DocumentsSkeleton } from "@/components/ui/skeleton"
 
 interface Document {
   id: string
@@ -48,6 +51,9 @@ export function DocumentList() {
   const [replaceFile, setReplaceFile] = useState<File | null>(null)
   const [replacing, setReplacing] = useState(false)
 
+  // Confirm Delete
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true)
@@ -86,8 +92,10 @@ export function DocumentList() {
       setUploadFile(null)
       setUploadCategory("CV")
       await fetchDocuments()
+      toast.success("Dokumen berhasil diupload!")
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload gagal")
+      toast.error(e instanceof Error ? e.message : "Upload gagal")
     } finally {
       setUploading(false)
     }
@@ -101,8 +109,10 @@ export function DocumentList() {
         throw new Error(err.error || "Hapus gagal")
       }
       await fetchDocuments()
+      toast.success("Dokumen berhasil dihapus!")
     } catch (e) {
       setError(e instanceof Error ? e.message : "Hapus gagal")
+      toast.error(e instanceof Error ? e.message : "Hapus gagal")
     }
   }
 
@@ -125,20 +135,8 @@ export function DocumentList() {
     return map[category] || "default"
   }
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-4">
-              <div className="h-10 w-10 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
-              <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-              <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
+  if (loading && documents.length === 0) {
+    return <DocumentsSkeleton />
   }
 
   return (
@@ -173,6 +171,17 @@ export function DocumentList() {
         </div>
       )}
 
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={deleteTargetId !== null}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={async () => {
+          if (deleteTargetId) await handleDelete(deleteTargetId)
+        }}
+        title="HAPUS DOKUMEN"
+        description="Apakah Anda yakin ingin menghapus dokumen ini? Tindakan ini tidak dapat dibatalkan."
+      />
+
       {/* Document Grid */}
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
@@ -197,26 +206,30 @@ export function DocumentList() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-zinc-400 hover:text-blue-600"
+                      className="text-zinc-400 hover:text-blue-600 min-h-[44px] min-w-[44px]"
                       onClick={() => setPreviewDoc(doc)}
                       title="Preview"
+                      aria-label={`Preview dokumen ${doc.name}`}
                     >
                       👁
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-zinc-400 hover:text-amber-600"
+                      className="text-zinc-400 hover:text-amber-600 min-h-[44px] min-w-[44px]"
                       onClick={() => { setReplaceDoc(doc); setReplaceFile(null) }}
                       title="Ganti file"
+                      aria-label={`Ganti file dokumen ${doc.name}`}
                     >
                       🔄
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-zinc-400 hover:text-red-600"
-                      onClick={() => handleDelete(doc.id)}
+                      className="text-zinc-400 hover:text-red-600 min-h-[44px] min-w-[44px]"
+                      onClick={() => setDeleteTargetId(doc.id)}
+                      title="Hapus"
+                      aria-label={`Hapus dokumen ${doc.name}`}
                     >
                       ✕
                     </Button>
@@ -274,8 +287,10 @@ export function DocumentList() {
                   setReplaceDoc(null)
                   setReplaceFile(null)
                   await fetchDocuments()
+                  toast.success("File dokumen berhasil diganti!")
                 } catch (e) {
                   setError(e instanceof Error ? e.message : "Gagal mengganti file")
+                  toast.error(e instanceof Error ? e.message : "Gagal mengganti file")
                 } finally {
                   setReplacing(false)
                 }

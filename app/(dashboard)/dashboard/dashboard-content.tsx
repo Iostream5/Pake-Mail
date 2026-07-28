@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import Link from "next/link"
+import { DashboardSkeleton } from "@/components/ui/skeleton"
 
 interface DashboardStats {
   metrics: {
@@ -48,6 +49,7 @@ interface DashboardStats {
 export function DashboardContent({ userName }: { userName: string }) {
   const [data, setData] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -57,6 +59,7 @@ export function DashboardContent({ userName }: { userName: string }) {
         if (res.ok && !cancelled) {
           const json = await res.json()
           setData(json.data || json)
+          setLastUpdated(new Date())
         }
       } catch (err) {
         if (!cancelled) console.error("Failed loading dashboard stats", err)
@@ -101,6 +104,10 @@ export function DashboardContent({ userName }: { userName: string }) {
     }
   }
 
+  if (loading) {
+    return <DashboardSkeleton />
+  }
+
   return (
     <div className="max-w-[1200px] mx-auto space-y-10">
       {/* ─── Header & Operations Summary ─── */}
@@ -118,6 +125,11 @@ export function DashboardContent({ userName }: { userName: string }) {
           <p className="text-sm text-warm-granite max-w-xl mt-1">
             Ringkasan operasi batch pengiriman lamaran kerja dan respon perusahaan real-time.
           </p>
+          {lastUpdated && (
+            <p className="text-[10px] font-mono text-warm-granite mt-2 uppercase tracking-widest">
+              Terakhir diperbarui: {lastUpdated.toLocaleTimeString("id-ID")}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-3">

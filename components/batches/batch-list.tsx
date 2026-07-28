@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { BatchesSkeleton } from "@/components/ui/skeleton"
 
 interface BatchListItem {
   id: string
@@ -83,7 +84,9 @@ export function BatchList() {
     }
   }
 
-  if (loading) return <div className="text-sm text-zinc-500">Loading...</div>
+  if (loading && batches.length === 0) {
+    return <BatchesSkeleton />
+  }
 
   return (
     <div className="space-y-4">
