@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pake Mail | System Operations</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;family=Geist:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .grain-overlay {
+            position: relative;
+        }
+        .grain-overlay::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.03;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            border-radius: inherit;
+        }
+        @keyframes pulse-orange {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+        .status-pulse {
+            animation: pulse-orange 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#cac6c3",
+                        "metric-green": "#a0ca92",
+                        "on-primary-fixed": "#1c1b1b",
+                        "obsidian-canvas": "#101010",
+                        "tertiary-container": "#11100f",
+                        "surface-container-lowest": "#0e0e0e",
+                        "tertiary": "#cac6c3",
+                        "inverse-on-surface": "#313030",
+                        "background": "#141313",
+                        "on-secondary-container": "#b4b5b5",
+                        "tertiary-fixed": "#e6e1df",
+                        "primary": "#c8c6c5",
+                        "surface-dim": "#141313",
+                        "signal-orange": "#ee6018",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "inverse-primary": "#5f5e5e",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "surface-variant": "#353434",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-highest": "#353434",
+                        "surface-bright": "#3a3939",
+                        "primary-fixed": "#e5e2e1",
+                        "bone": "#eeeeee",
+                        "surface": "#141313",
+                        "error-container": "#93000a",
+                        "warm-granite": "#8a8380",
+                        "chalk": "#fafafa",
+                        "on-background": "#e5e2e1",
+                        "secondary-fixed": "#e2e2e2",
+                        "surface-container-low": "#1c1b1b",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-tertiary-fixed": "#1d1b1a",
+                        "on-error-container": "#ffdad6",
+                        "outline-variant": "#444748",
+                        "on-tertiary-container": "#7f7c7a",
+                        "error": "#ffb4ab",
+                        "graphite-mid": "#4d4947",
+                        "secondary": "#c6c6c7",
+                        "on-tertiary": "#32302f",
+                        "ink-black": "#060505",
+                        "pale-stone": "#b8b3b0",
+                        "on-error": "#690005",
+                        "carbon-lift": "#1d1a18",
+                        "surface-tint": "#c8c6c5",
+                        "on-tertiary-fixed-variant": "#484645",
+                        "surface-container-high": "#2b2a2a",
+                        "ash-stroke": "#3d3a39",
+                        "inverse-surface": "#e5e2e1",
+                        "on-primary-fixed-variant": "#474646",
+                        "secondary-container": "#454747",
+                        "on-secondary": "#2f3131",
+                        "primary-container": "#101010",
+                        "on-primary": "#313030",
+                        "on-primary-container": "#7d7c7b",
+                        "surface-container": "#201f1f",
+                        "on-surface-variant": "#c4c7c7",
+                        "outline": "#8e9192"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "8px",
+                        "lg": "40px",
+                        "max-width": "1200px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "xl": "80px",
+                        "base": "8px",
+                        "section-gap": "96px"
+                    },
+                    "fontFamily": {
+                        "display": ["Geist"],
+                        "body-sm": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "headline-md": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body": ["Geist"]
+                    },
+                    "fontSize": {
+                        "display": ["72px", {"lineHeight": "72px", "letterSpacing": "-2.88px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0px", "fontWeight": "400"}],
+                        "headline-lg": ["44px", {"lineHeight": "49px", "letterSpacing": "-1.1px", "fontWeight": "400"}],
+                        "headline-md": ["36px", {"lineHeight": "40px", "letterSpacing": "-1.12px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["32px", {"lineHeight": "36px", "letterSpacing": "-0.8px", "fontWeight": "400"}],
+                        "label-mono": ["12px", {"lineHeight": "12px", "letterSpacing": "-0.24px", "fontWeight": "400"}],
+                        "body": ["16px", {"lineHeight": "24px", "letterSpacing": "0px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-obsidian-canvas text-bone font-body antialiased">
+<!-- TopAppBar Injection from JSON -->
+<header class="fixed top-0 left-0 w-full z-50 bg-obsidian-canvas text-bone border-b border-ash-stroke flex justify-between items-center px-sm md:px-lg h-16">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-bone">menu</span>
+<span class="font-display text-headline-md text-bone uppercase tracking-tighter">Pake Mail</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-carbon-lift border border-ash-stroke overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist profile avatar for a technical dashboard. The style is geometric and monochromatic, using shades of grey and black with a slight film grain texture to match the industrial 'Obsidian Canvas' aesthetic. Lighting is sharp and directional, highlighting the clean lines and professional nature of the user interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwREd3Cy9IbfdNlexoDguxixDNqnFlOZidgZxzZnB7QKaXzUrYZL9p3K5lfc0kpNHvVLwMsnsGWWbK6SasK52711bNiW_vackvhVoArwzQafymEqSeWCpOUypxAXPlV-kpV6s7FTAyDdwz755ELgQXD82w4ONeIsRoEgVTtzDhn0hmxX38ykniJT9IQGzqnwIiZhjlTvXHKsdoeMtVho26iVvVyrKdL7_vtzEBdTCF70GVFQsXViw29lSAgqYEZaesUBNU2yljC2mq"/>
+</div>
+</div>
+</header>
+<main class="pt-16">
+<!-- Hero Section: Concentrated Data, Expansive Void -->
+<section class="relative min-h-[751px] flex flex-col items-center justify-center text-center px-sm py-xl overflow-hidden">
+<div class="absolute inset-0 z-0 opacity-20">
+
+</div>
+<div class="relative z-10 max-w-4xl mx-auto">
+<div class="inline-flex items-center gap-2 mb-lg px-4 py-1.5 bg-carbon-lift border border-ash-stroke rounded-full">
+<span class="w-2 h-2 rounded-full bg-signal-orange status-pulse"></span>
+<span class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite">System Ready: Protocol 2.0</span>
+</div>
+<h1 class="font-display text-display mb-sm md:text-display sm:text-headline-lg-mobile">
+                    Pake Mail
+                </h1>
+<p class="font-body text-headline-md text-warm-granite max-w-2xl mx-auto mb-lg leading-relaxed">
+                    Operasi pengiriman pesan berkinerja tinggi. Otomasi batch, manajemen template presisi, dan pantauan status real-time.
+                </p>
+<div class="flex flex-col sm:flex-row items-center justify-center gap-md">
+<button class="w-full sm:w-auto px-xl py-4 bg-chalk text-ink-black font-label-mono text-label-mono uppercase font-bold tracking-widest hover:bg-bone transition-all duration-200 rounded-[3px]">
+                        Mulai Sekarang
+                    </button>
+<button class="w-full sm:w-auto px-xl py-4 bg-transparent border border-ash-stroke text-bone font-label-mono text-label-mono uppercase tracking-widest hover:bg-carbon-lift transition-all duration-200 rounded-[3px]">
+                        Daftar
+                    </button>
+</div>
+</div>
+<!-- Terminal-style Decorative Line -->
+<div class="absolute bottom-0 left-0 w-full h-[1px] bg-ash-stroke"></div>
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-[2px] bg-bone"></div>
+</section>
+<!-- Feature Section: The Bone Cards -->
+<section class="py-section-gap max-w-max-width mx-auto px-sm">
+<div class="flex flex-col md:flex-row justify-between items-end mb-xl gap-md">
+<div class="max-w-xl">
+<h2 class="font-display text-headline-lg mb-4">Core Logistics</h2>
+<p class="text-warm-granite font-body">Infrastruktur pengiriman yang dirancang untuk efisiensi maksimal tanpa kompromi visual.</p>
+</div>
+<div class="font-label-mono text-label-mono text-warm-granite border-l border-ash-stroke pl-4">
+                    MODULE_VERSION: 0.1.4<br/>
+                    STABILITY: OPTIMAL
+                </div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<!-- Feature Card 1 -->
+<div class="grain-overlay bg-bone text-ink-black p-lg rounded-[10px] flex flex-col h-full min-h-[320px] transition-transform hover:scale-[1.01] duration-300">
+<div class="flex justify-between items-start mb-xl">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'wght' 200;">style</span>
+<span class="font-label-mono text-label-mono opacity-50">#001</span>
+</div>
+<div class="mt-auto">
+<h3 class="font-display text-headline-md font-bold mb-sm tracking-tight">Template &amp; Variabel</h3>
+<p class="font-body text-body opacity-80">Rancang pesan dinamis dengan mesin rendering variabel yang mendukung markup kompleks.</p>
+</div>
+</div>
+<!-- Feature Card 2 -->
+<div class="grain-overlay bg-bone text-ink-black p-lg rounded-[10px] flex flex-col h-full min-h-[320px] transition-transform hover:scale-[1.01] duration-300">
+<div class="flex justify-between items-start mb-xl">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'wght' 200;">layers</span>
+<span class="font-label-mono text-label-mono opacity-50">#002</span>
+</div>
+<div class="mt-auto">
+<h3 class="font-display text-headline-md font-bold mb-sm tracking-tight">Batch &amp; Jadwal</h3>
+<p class="font-body text-body opacity-80">Antrean pengiriman otomatis dengan penjadwalan presisi hingga milidetik.</p>
+</div>
+</div>
+<!-- Feature Card 3 -->
+<div class="grain-overlay bg-bone text-ink-black p-lg rounded-[10px] flex flex-col h-full min-h-[320px] transition-transform hover:scale-[1.01] duration-300">
+<div class="flex justify-between items-start mb-xl">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'wght' 200;">monitoring</span>
+<span class="font-label-mono text-label-mono opacity-50">#003</span>
+</div>
+<div class="mt-auto">
+<h3 class="font-display text-headline-md font-bold mb-sm tracking-tight">Pantau Status</h3>
+<p class="font-body text-body opacity-80">Telemetri real-time untuk setiap paket data yang dikirimkan. Visibilitas penuh pada endpoint.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Functional Dashboard Preview Section (Asymmetric / Bento Style) -->
+<section class="pb-section-gap max-w-max-width mx-auto px-sm">
+<div class="grid grid-cols-12 gap-sm">
+<!-- Large Panel -->
+<div class="col-span-12 md:col-span-8 bg-carbon-lift border border-ash-stroke p-lg rounded-lg overflow-hidden relative group">
+<div class="flex items-center justify-between mb-lg">
+<div class="flex gap-4">
+<div class="h-3 w-3 rounded-full bg-metric-green"></div>
+<div class="h-3 w-3 rounded-full bg-warm-granite"></div>
+<div class="h-3 w-3 rounded-full bg-warm-granite"></div>
+</div>
+<span class="font-label-mono text-label-mono text-warm-granite">LIVE_FEED.SYS</span>
+</div>
+<div class="space-y-4 opacity-60 group-hover:opacity-100 transition-opacity duration-500">
+<div class="flex justify-between border-b border-ash-stroke pb-2">
+<span class="font-label-mono text-metric-green">200 OK</span>
+<span class="font-label-mono">BATCH_ID: 9928-X</span>
+<span class="font-label-mono">T: 0.02ms</span>
+</div>
+<div class="flex justify-between border-b border-ash-stroke pb-2">
+<span class="font-label-mono text-metric-green">200 OK</span>
+<span class="font-label-mono">BATCH_ID: 9928-Y</span>
+<span class="font-label-mono">T: 0.04ms</span>
+</div>
+<div class="flex justify-between border-b border-ash-stroke pb-2">
+<span class="font-label-mono text-signal-orange">408 TO</span>
+<span class="font-label-mono">RETRY_ATTEMPT_1</span>
+<span class="font-label-mono">T: 5.00ms</span>
+</div>
+</div>
+<div class="mt-xl h-64 bg-obsidian-canvas rounded-lg flex items-center justify-center border border-ash-stroke">
+<div class="w-full h-full bg-cover bg-center" data-alt="A futuristic and technical data visualization dashboard interface. The background is a deep obsidian canvas with sharp white and grey grid lines. Intricate data nodes and glowing signal orange pulse points represent active connections and mail transmissions. The aesthetic is high-contrast, professional, and strictly minimalist, evocative of a mission control room or a high-end developer environment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDIJZe-U65Ey8WNDVLwHsQwHbpSWh_AxQrBvXBpTH2SIzfkmN3PC3YwTCJCP2S3CGUeEctdkTRW2QDSunWVfwEsqae6TER7n5RaeN2cYLon0pF8BKo_eCLCzAPM8BA98n60mIVhA2VJNs75yqfANgSIbI-oXhXhQB0kHT5P-h1jF8RzDOfgqDE0mGKrmRHs8K4oY7XjnHaOTRVjG9ymZRZq23wAW9WfY-qfWXQkbvbcq_3YbRqE1IYx-cV2f7GXMh3Fd8Rw4iu9DmrT')"></div>
+</div>
+</div>
+<!-- Side Panel (Bento) -->
+<div class="col-span-12 md:col-span-4 flex flex-col gap-sm">
+<div class="bg-carbon-lift border border-ash-stroke p-md rounded-lg flex-1">
+<h4 class="font-label-mono text-label-mono text-warm-granite uppercase mb-sm">Inbound Traffic</h4>
+<div class="text-headline-md font-display text-bone">1.2M <span class="text-sm font-label-mono text-warm-granite">RPM</span></div>
+<div class="mt-4 h-1 w-full bg-obsidian-canvas">
+<div class="h-full bg-metric-green w-3/4"></div>
+</div>
+</div>
+<div class="bg-bone text-ink-black p-md rounded-lg flex-1 grain-overlay">
+<h4 class="font-label-mono text-label-mono opacity-50 uppercase mb-sm">Active Recipients</h4>
+<div class="text-headline-md font-display font-bold">28,402</div>
+<div class="flex -space-x-2 mt-4">
+<div class="w-8 h-8 rounded-full border-2 border-bone bg-carbon-lift"></div>
+<div class="w-8 h-8 rounded-full border-2 border-bone bg-warm-granite"></div>
+<div class="w-8 h-8 rounded-full border-2 border-bone bg-ash-stroke"></div>
+<div class="w-8 h-8 rounded-full border-2 border-bone bg-obsidian-canvas flex items-center justify-center text-[10px] font-bold text-bone">+42</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="bg-carbon-lift border-y border-ash-stroke py-xl text-center px-sm">
+<h2 class="font-display text-headline-lg mb-lg">Ready to Deploy?</h2>
+<p class="font-body text-warm-granite max-w-xl mx-auto mb-lg">Tingkatkan presisi operasional mail-server Anda sekarang dengan Pake Mail.</p>
+<button class="px-xl py-4 bg-chalk text-ink-black font-label-mono text-label-mono uppercase font-bold tracking-widest hover:bg-bone transition-all duration-200 rounded-[3px]">
+                Inisiasi Sistem
+            </button>
+</section>
+</main>
+<!-- Footer -->
+<footer class="py-xl max-w-max-width mx-auto px-sm flex flex-col md:flex-row justify-between items-start gap-xl">
+<div class="space-y-4">
+<div class="font-display text-headline-md text-bone uppercase tracking-tighter">Pake Mail</div>
+<p class="text-warm-granite font-label-mono text-label-mono max-w-xs">
+                Sistem Pengoperasian Email Terpadu.<br/>
+                Terminal War Room untuk data.<br/>
+                © 2024 PAKE_SYSTEMS.LLC
+            </p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-xl">
+<div class="space-y-4">
+<div class="font-label-mono text-label-mono text-bone font-bold uppercase">Protokol</div>
+<ul class="font-label-mono text-label-mono text-warm-granite space-y-2 uppercase">
+<li><a class="hover:text-bone" href="#">Dashboard</a></li>
+<li><a class="hover:text-bone" href="#">Template</a></li>
+<li><a class="hover:text-bone" href="#">Security</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<div class="font-label-mono text-label-mono text-bone font-bold uppercase">Resource</div>
+<ul class="font-label-mono text-label-mono text-warm-granite space-y-2 uppercase">
+<li><a class="hover:text-bone" href="#">API Docs</a></li>
+<li><a class="hover:text-bone" href="#">Log Access</a></li>
+<li><a class="hover:text-bone" href="#">Status</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<div class="font-label-mono text-label-mono text-bone font-bold uppercase">Legal</div>
+<ul class="font-label-mono text-label-mono text-warm-granite space-y-2 uppercase">
+<li><a class="hover:text-bone" href="#">Privacy</a></li>
+<li><a class="hover:text-bone" href="#">Compliance</a></li>
+</ul>
+</div>
+</div>
+</footer>
+<!-- Interactive micro-effects script -->
+<script>
+        document.querySelectorAll('.grain-overlay').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Subtle shadow shift on mouse move for "industrial feel"
+                card.style.transform = `perspective(1000px) rotateX(${(y - rect.height/2) / 100}deg) rotateY(${(x - rect.width/2) / -100}deg) scale(1.01)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+            });
+        });
+    </script>
+</body></html>

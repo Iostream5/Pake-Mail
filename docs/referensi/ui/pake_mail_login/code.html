@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - Pake Mail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;family=Geist:wght@100;300;400;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>body {
+    background-color: #101010;
+    /* obsidian-canvas */
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden
+    }
+.grain-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.03;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuA511qneFxQ11GnYVuWuWxMVDhCKhBTGiEVV3oUkBVsv3tgldRRxyHNWw1Gb93hJ5-Yu79fvODDmFjhKec0Y4o0oZyWEljj-anr5O-em5pw0sikmYh_sXDifPDef3k2lnr0axV2NIlCLotkVtKEXDuSLIZd6l7vqZ6sfgGQK9QQ4Z6ERvjgceWbMvLyJFkc8MAxW9agcGSyIolK4HOhlgGFNJqd5Q0nOzE5_myWKN_X3d5fMpRlT-g-UY2wkIrjZpRbdP3qJOMR5xuo)
+    }
+.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+    }
+.login-card {
+    transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1)
+    }
+.login-card:hover {
+    transform: translatey(-2px)
+    }
+@keyframes pulse-slow {
+    0%, 100% {
+        opacity: 0.8;
+        } 50% {
+        opacity: 0.4;
+        }
+    }
+.status-pulse {
+    animation: pulse-slow 3s ease-in-out infinite
+    }</style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed-dim": "#cac6c3",
+                      "metric-green": "#a0ca92",
+                      "on-primary-fixed": "#1c1b1b",
+                      "obsidian-canvas": "#101010",
+                      "tertiary-container": "#11100f",
+                      "surface-container-lowest": "#0e0e0e",
+                      "tertiary": "#cac6c3",
+                      "inverse-on-surface": "#313030",
+                      "background": "#141313",
+                      "on-secondary-container": "#b4b5b5",
+                      "tertiary-fixed": "#e6e1df",
+                      "primary": "#c8c6c5",
+                      "surface-dim": "#141313",
+                      "signal-orange": "#ee6018",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "inverse-primary": "#5f5e5e",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "surface-variant": "#353434",
+                      "on-secondary-fixed-variant": "#454747",
+                      "on-surface": "#e5e2e1",
+                      "surface-container-highest": "#353434",
+                      "surface-bright": "#3a3939",
+                      "primary-fixed": "#e5e2e1",
+                      "bone": "#eeeeee",
+                      "surface": "#141313",
+                      "error-container": "#93000a",
+                      "warm-granite": "#8a8380",
+                      "chalk": "#fafafa",
+                      "on-background": "#e5e2e1",
+                      "secondary-fixed": "#e2e2e2",
+                      "surface-container-low": "#1c1b1b",
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "on-tertiary-fixed": "#1d1b1a",
+                      "on-error-container": "#ffdad6",
+                      "outline-variant": "#444748",
+                      "on-tertiary-container": "#7f7c7a",
+                      "error": "#ffb4ab",
+                      "graphite-mid": "#4d4947",
+                      "secondary": "#c6c6c7",
+                      "on-tertiary": "#32302f",
+                      "ink-black": "#060505",
+                      "pale-stone": "#b8b3b0",
+                      "on-error": "#690005",
+                      "carbon-lift": "#1d1a18",
+                      "surface-tint": "#c8c6c5",
+                      "on-tertiary-fixed-variant": "#484645",
+                      "surface-container-high": "#2b2a2a",
+                      "ash-stroke": "#3d3a39",
+                      "inverse-surface": "#e5e2e1",
+                      "on-primary-fixed-variant": "#474646",
+                      "secondary-container": "#454747",
+                      "on-secondary": "#2f3131",
+                      "primary-container": "#101010",
+                      "on-primary": "#313030",
+                      "on-primary-container": "#7d7c7b",
+                      "surface-container": "#201f1f",
+                      "on-surface-variant": "#c4c7c7",
+                      "outline": "#8e9192"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "xs": "8px",
+                      "lg": "40px",
+                      "max-width": "1200px",
+                      "md": "24px",
+                      "sm": "16px",
+                      "xl": "80px",
+                      "base": "8px",
+                      "section-gap": "96px"
+              },
+              "fontFamily": {
+                      "display": ["Geist"],
+                      "body-sm": ["Geist"],
+                      "headline-lg": ["Geist"],
+                      "headline-md": ["Geist"],
+                      "headline-lg-mobile": ["Geist"],
+                      "label-mono": ["JetBrains Mono"],
+                      "body": ["Geist"]
+              },
+              "fontSize": {
+                      "display": ["72px", {"lineHeight": "72px", "letterSpacing": "-2.88px", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0px", "fontWeight": "400"}],
+                      "headline-lg": ["44px", {"lineHeight": "49px", "letterSpacing": "-1.1px", "fontWeight": "400"}],
+                      "headline-md": ["36px", {"lineHeight": "40px", "letterSpacing": "-1.12px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["32px", {"lineHeight": "36px", "letterSpacing": "-0.8px", "fontWeight": "400"}],
+                      "label-mono": ["12px", {"lineHeight": "12px", "letterSpacing": "-0.24px", "fontWeight": "400"}],
+                      "body": ["16px", {"lineHeight": "24px", "letterSpacing": "0px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-obsidian-canvas text-bone flex flex-col min-h-screen">
+<div class="grain-overlay"></div>
+<!-- Atmospheric Background Animation -->
+<div class="fixed inset-0 z-0 opacity-20 overflow-hidden pointer-events-none">
+
+</div>
+<!-- Main Content Canvas -->
+<main class="relative z-10 flex-grow flex flex-col items-center justify-center px-sm">
+<!-- Brand Identification -->
+<header class="mb-xl text-center">
+<div class="inline-flex items-center gap-xs mb-md">
+<div class="w-2 h-2 bg-signal-orange rounded-full status-pulse"></div>
+<span class="font-label-mono text-label-mono text-warm-granite tracking-widest uppercase">System Operational</span>
+</div>
+<h1 class="font-display text-headline-md md:text-headline-lg text-bone tracking-tighter uppercase">Pake Mail</h1>
+</header>
+<!-- Login Card -->
+<section class="login-card w-full max-width max-w-[440px] bg-bone p-lg rounded-xl shadow-2xl overflow-hidden relative border border-ash-stroke">
+<!-- Subtle Decorative Stroke for Factory Aesthetic -->
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-warm-granite to-transparent opacity-20"></div>
+<div class="flex flex-col items-center">
+<h2 class="font-display text-headline-md text-ink-black mb-xl text-center leading-tight">Masuk ke Pake Mail</h2>
+<!-- Google Sign-In Primary CTA -->
+<button class="group w-full bg-chalk border border-ash-stroke hover:bg-white text-ink-black font-body px-md h-14 rounded-lg flex items-center justify-center gap-md transition-all duration-200 active:scale-[0.98] focus:ring-2 focus:ring-ink-black focus:outline-none">
+<svg class="w-6 h-6" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+</svg>
+<span class="font-bold tracking-tight">Sign in with Google</span>
+</button>
+<!-- Technical Metadata / Functional Footer inside Card -->
+<div class="mt-lg pt-lg border-t border-ash-stroke/10 w-full">
+<div class="flex justify-between items-center text-ink-black/40 font-label-mono text-label-mono">
+<span>VERSION_2.4.0</span>
+<div class="flex gap-sm">
+<span class="material-symbols-outlined text-[14px]">encrypted</span>
+<span class="uppercase">End-to-End Secure</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Asymmetric Background Image for Brutalist Texture -->
+<div class="absolute right-0 bottom-0 pointer-events-none select-none mix-blend-screen opacity-10 hidden lg:block">
+<img class="w-[600px] h-auto object-contain" data-alt="A high-contrast macro photograph of industrial server hardware, cold blue and silver metallic textures with intricate wiring and circuit patterns. The style is brutalist and technical, echoing a mission control center aesthetic with sharp focus and deep obsidian shadows. The lighting is harsh and directional, creating a sense of powerful high-stakes data processing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmI2OXDSlZ-GZyVoLshpEg7Ndc6NFJPwfc656iQf67HzrwWeF5GnqZ8MTbC--zNqptwQ6t8w1OTSeNleCwf4zx3-VTEw0SaykmfL5Sr9VLihVQ9S7B6ghGxWgOrl_LxTAAeMBEKcvWmDrdJ3vn3ETtMu0QKWB1eUkf3NQbAvbLwqETUhOYhPyY8n_E-0jVnaSOgobXVrdon3Xy1VOFW7UrcoYDSHSn0OFj6RHDaPOio0H2OEGTH0N1lqf7dxHqmd8Sv7KFtYHy6XaU"/>
+</div>
+</main>
+<!-- Global Footer: Legal & Disclaimer -->
+<footer class="relative z-10 px-lg py-lg w-full flex flex-col md:flex-row justify-between items-center gap-md">
+<div class="text-warm-granite font-body-sm max-w-md text-center md:text-left leading-relaxed">
+<p>© 2024 Pake Mail. All systems active. Access restricted to authorized personnel. Use of this platform is subject to our <a class="text-bone hover:underline" href="#">Terms of Service</a> and <a class="text-bone hover:underline" href="#">Security Protocols</a>.</p>
+</div>
+<div class="flex gap-lg">
+<a class="font-label-mono text-label-mono text-warm-granite hover:text-bone uppercase tracking-widest transition-colors" href="#">Privacy</a>
+<a class="font-label-mono text-label-mono text-warm-granite hover:text-bone uppercase tracking-widest transition-colors" href="#">Help</a>
+<a class="font-label-mono text-label-mono text-warm-granite hover:text-bone uppercase tracking-widest transition-colors" href="#">Status</a>
+</div>
+</footer>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const button = document.querySelector('button');
+            const card = document.querySelector('.login-card');
+
+            // Subtle mouse-follow effect on the login card
+            window.addEventListener('mousemove', (e) => {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+                card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            });
+
+            // Button click ripple feedback
+            button.addEventListener('mousedown', () => {
+                button.style.backgroundColor = '#eeeeee'; // Bone
+            });
+            button.addEventListener('mouseup', () => {
+                button.style.backgroundColor = '#fafafa'; // Chalk
+            });
+        });
+    </script>
+</body></html>

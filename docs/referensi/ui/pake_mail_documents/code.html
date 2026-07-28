@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pake Mail - Documents</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>body {
+    background-color: #101010;
+    color: #eee;
+    -webkit-font-smoothing: antialiased
+    }
+.grain {
+    position: relative
+    }
+.grain::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuDx75JtacWktrwPgQdtOf7E9_dyZlRYaSCecPnDWce3XLACNPspdK6MU71vpQPdziLq4I_H75hOs_6f6cabRxwMAv51_LQv6RovrdU-w1vSyLia-Ao6eeh9Ti6OJGeP1SIjgN7ADfwdxh-Ze_jz7GQyVj8yO16v8rl-SdEcekAQciKStmNKWUWJgJSmhPHvDnhCmYs5zVWBsp0S63jLdNVHXDhTVtmx0RqG8jnSoxEgWaoPlFO-ozye_DhleS9RpkP3dPiBQUC4Z8Gl);
+    z-index: 10
+    }
+.hide-scrollbar::-webkit-scrollbar {
+    display: none
+    }
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none
+    }
+.active-glow {
+    box-shadow: 0 0 15px rgba(238, 238, 238, 0.1)
+    }</style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "obsidian-canvas": "#101010",
+                        "carbon-lift": "#1d1a18",
+                        "bone": "#eeeeee",
+                        "chalk": "#fafafa",
+                        "warm-granite": "#8a8380",
+                        "ash-stroke": "#3d3a39",
+                        "signal-orange": "#ee6018",
+                        "metric-green": "#a0ca92",
+                        "ink-black": "#060505"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "8px",
+                        "lg": "40px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "xl": "80px",
+                        "base": "8px",
+                        "section-gap": "96px"
+                    },
+                    "fontFamily": {
+                        "display": ["Geist"],
+                        "label-mono": ["JetBrains Mono"],
+                        "body": ["Geist"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body selection:bg-bone selection:text-ink-black">
+<!-- Top Navigation -->
+<nav class="fixed top-0 z-50 flex justify-between items-center w-full px-sm md:px-lg h-16 bg-obsidian-canvas border-b border-ash-stroke">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-bone cursor-pointer md:hidden">menu</span>
+<span class="font-display text-headline-md text-bone uppercase tracking-tighter">Pake Mail</span>
+</div>
+<div class="flex items-center gap-md">
+<div class="hidden md:flex gap-sm">
+<button class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite hover:text-bone transition-colors">Search</button>
+<button class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite hover:text-bone transition-colors">Help</button>
+</div>
+<div class="w-8 h-8 bg-bone rounded-full flex items-center justify-center text-ink-black font-bold text-xs">JD</div>
+</div>
+</nav>
+<div class="flex pt-16 min-h-screen">
+<!-- Sidebar -->
+<aside class="hidden md:flex flex-col h-full w-72 fixed left-0 top-16 bg-carbon-lift border-r border-ash-stroke py-lg">
+<div class="px-lg mb-8">
+<span class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite opacity-50">SYSTEM_OPERATIONS</span>
+</div>
+<nav class="flex flex-col gap-1">
+<!-- Navigation Items from JSON logic -->
+<a class="text-warm-granite flex items-center px-lg py-3 gap-4 border-l-2 border-transparent hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-label-mono text-label-mono uppercase tracking-widest">Dashboard</span>
+</a>
+<a class="text-warm-granite flex items-center px-lg py-3 gap-4 border-l-2 border-transparent hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">person</span>
+<span class="font-label-mono text-label-mono uppercase tracking-widest">Profile</span>
+</a>
+<a class="bg-obsidian-canvas text-bone border-l-2 border-bone flex items-center px-lg py-3 gap-4 transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="font-label-mono text-label-mono uppercase tracking-widest">Documents</span>
+</a>
+<a class="text-warm-granite flex items-center px-lg py-3 gap-4 border-l-2 border-transparent hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">style</span>
+<span class="font-label-mono text-label-mono uppercase tracking-widest">Template</span>
+</a>
+<a class="text-warm-granite flex items-center px-lg py-3 gap-4 border-l-2 border-transparent hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="font-label-mono text-label-mono uppercase tracking-widest">Recipients</span>
+</a>
+<a class="text-warm-granite flex items-center px-lg py-3 gap-4 border-l-2 border-transparent hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+<span class="font-label-mono text-label-mono uppercase tracking-widest">Batches</span>
+</a>
+<a class="text-warm-granite flex items-center px-lg py-3 gap-4 border-l-2 border-transparent hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+<span class="font-label-mono text-label-mono uppercase tracking-widest">Email Accounts</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 md:ml-72 p-md md:p-lg max-w-full overflow-x-hidden">
+<!-- Page Header Area -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-section-gap">
+<div>
+<h1 class="font-display text-headline-md text-bone mb-xs">Documents</h1>
+<p class="text-warm-granite font-body max-w-md">Manage your encrypted assets and attachments for secure dispatch.</p>
+</div>
+<button class="flex items-center justify-center gap-xs bg-chalk text-ink-black px-md py-sm font-label-mono text-label-mono uppercase tracking-widest font-bold rounded-[3px] hover:bg-bone active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+                    Upload Dokumen
+                </button>
+</header>
+<!-- Category Tabs (Horizontal Scroll) -->
+<section class="mb-lg overflow-hidden border-b border-ash-stroke">
+<div class="flex items-center gap-lg overflow-x-auto hide-scrollbar whitespace-nowrap pb-4">
+<button class="relative font-label-mono text-label-mono uppercase tracking-widest text-bone pb-4">
+                        Semua
+                        <span class="absolute bottom-0 left-0 w-full h-[2px] bg-bone"></span>
+</button>
+<button class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite hover:text-bone pb-4 transition-colors">CV</button>
+<button class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite hover:text-bone pb-4 transition-colors">Portfolio</button>
+<button class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite hover:text-bone pb-4 transition-colors">Invoices</button>
+<button class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite hover:text-bone pb-4 transition-colors">Certificates</button>
+<button class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite hover:text-bone pb-4 transition-colors">Drafts</button>
+<button class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite hover:text-bone pb-4 transition-colors">Archives</button>
+</div>
+</section>
+<!-- Empty State Grid / Content -->
+<section class="relative">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+<!-- Statistics Panel (Secondary context) -->
+<div class="md:col-span-4 flex flex-col gap-md">
+<div class="bg-carbon-lift border border-ash-stroke p-md rounded-lg flex flex-col gap-xs">
+<span class="font-label-mono text-[10px] uppercase tracking-widest text-warm-granite">STORAGE_USAGE</span>
+<div class="flex items-end justify-between">
+<span class="font-display text-[32px] text-bone">0.0<span class="text-sm opacity-50">GB</span></span>
+<span class="text-metric-green font-label-mono text-label-mono">100% FREE</span>
+</div>
+<div class="w-full h-1 bg-ash-stroke rounded-full mt-2 overflow-hidden">
+<div class="w-0 h-full bg-bone transition-all duration-1000"></div>
+</div>
+</div>
+<div class="bg-carbon-lift border border-ash-stroke p-md rounded-lg flex flex-col gap-xs">
+<span class="font-label-mono text-[10px] uppercase tracking-widest text-warm-granite">LAST_ACTIVITY</span>
+<span class="text-warm-granite italic text-sm">No activity detected within the secure vault.</span>
+</div>
+</div>
+<!-- Main Drop Zone -->
+<div class="md:col-span-8">
+<div class="relative group min-h-[400px] flex flex-col items-center justify-center border-2 border-dashed border-ash-stroke rounded-xl bg-obsidian-canvas hover:bg-carbon-lift hover:border-warm-granite transition-all cursor-pointer">
+<!-- Visual Decoration -->
+<div class="absolute inset-0 overflow-hidden rounded-xl opacity-20 pointer-events-none">
+<div class="absolute -top-12 -right-12 w-48 h-48 border border-ash-stroke rounded-full"></div>
+<div class="absolute -bottom-12 -left-12 w-32 h-32 border border-ash-stroke rounded-full"></div>
+</div>
+<!-- Empty State Content -->
+<div class="relative z-10 flex flex-col items-center text-center px-md">
+<div class="w-16 h-16 bg-carbon-lift border border-ash-stroke flex items-center justify-center rounded-lg mb-md group-hover:scale-110 group-hover:bg-bone group-hover:text-ink-black transition-all duration-300">
+<span class="material-symbols-outlined text-[32px]">folder_open</span>
+</div>
+<h3 class="font-display text-headline-md text-bone mb-xs">Belum ada dokumen</h3>
+<p class="text-warm-granite font-body max-w-[280px]">Upload dokumen pertama kamu untuk memulai manajemen aset yang aman.</p>
+<div class="mt-lg">
+<span class="font-label-mono text-label-mono text-ash-stroke uppercase tracking-[0.2em] group-hover:text-bone transition-colors">DRAG &amp; DROP OR CLICK</span>
+</div>
+</div>
+<!-- Small Pulse Indicator -->
+<div class="absolute top-4 right-4 flex items-center gap-xs">
+<div class="w-1.5 h-1.5 rounded-full bg-signal-orange animate-pulse"></div>
+<span class="font-label-mono text-[10px] text-warm-granite tracking-tighter">SECURE_IDLE</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Decorative Asset List Footer (Hidden/Empty hint) -->
+<footer class="mt-section-gap pt-md border-t border-ash-stroke">
+<div class="flex flex-col md:flex-row justify-between items-center gap-sm">
+<span class="font-label-mono text-[10px] text-warm-granite uppercase tracking-widest">PAKE_MAIL // DOCUMENT_VAULT_V1.0</span>
+<div class="flex gap-md">
+<span class="font-label-mono text-[10px] text-warm-granite uppercase tracking-widest">AUTO_ENCRYPT: ENABLED</span>
+<span class="font-label-mono text-[10px] text-warm-granite uppercase tracking-widest">IP: 192.168.1.101</span>
+</div>
+</div>
+</footer>
+</main>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Simulated upload interactions
+            const dropzone = document.querySelector('.group');
+            if (dropzone) {
+                dropzone.addEventListener('mouseenter', () => {
+                    dropzone.querySelector('h3').textContent = "Ready to receive";
+                });
+                dropzone.addEventListener('mouseleave', () => {
+                    dropzone.querySelector('h3').textContent = "Belum ada dokumen";
+                });
+            }
+
+            // Tab highlighting logic
+            const tabs = document.querySelectorAll('button.font-label-mono');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    if (this.textContent.trim() === 'Upload Dokumen') return;
+                    
+                    tabs.forEach(t => {
+                        t.classList.remove('text-bone');
+                        t.classList.add('text-warm-granite');
+                        const indicator = t.querySelector('span.bg-bone');
+                        if (indicator) indicator.remove();
+                    });
+                    
+                    this.classList.remove('text-warm-granite');
+                    this.classList.add('text-bone');
+                    const indicator = document.createElement('span');
+                    indicator.className = 'absolute bottom-0 left-0 w-full h-[2px] bg-bone';
+                    this.classList.add('relative');
+                    this.appendChild(indicator);
+                });
+            });
+        });
+    </script>
+</body></html>

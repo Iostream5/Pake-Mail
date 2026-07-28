@@ -1,26 +1,190 @@
 @import "tailwindcss";
 
+/* ============================================================
+   FACTORY DESIGN SYSTEM — "Terminal War Room"
+   Anti-Decorative Functionalist · Modern Minimalism · Technical Brutalism
+   ============================================================ */
+
+/* --- Design Tokens (CSS Custom Properties) --- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Elevation Surfaces */
+  --color-obsidian-canvas: #101010;
+  --color-carbon-lift: #1d1a18;
+  --color-ash-stroke: #3d3a39;
+  --color-graphite-mid: #4d4947;
+  --color-warm-granite: #8a8380;
+  --color-pale-stone: #b8b3b0;
+  --color-bone: #eeeeee;
+  --color-chalk: #fafafa;
+  --color-ink-black: #060505;
+
+  /* Functional Accents */
+  --color-signal-orange: #ee6018;
+  --color-metric-green: #a0ca92;
+
+  /* Material Design Surface System */
+  --color-surface: #141313;
+  --color-surface-dim: #141313;
+  --color-surface-bright: #3a3939;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-surface-container-low: #1c1b1b;
+  --color-surface-container: #201f1f;
+  --color-surface-container-high: #2b2a2a;
+  --color-surface-container-highest: #353434;
+  --color-on-surface: #e5e2e1;
+  --color-on-surface-variant: #c4c7c7;
+
+  /* Error */
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
 }
 
+/* --- Tailwind v4 Theme Extension --- */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Colors */
+  --color-obsidian-canvas: var(--color-obsidian-canvas);
+  --color-carbon-lift: var(--color-carbon-lift);
+  --color-ash-stroke: var(--color-ash-stroke);
+  --color-graphite-mid: var(--color-graphite-mid);
+  --color-warm-granite: var(--color-warm-granite);
+  --color-pale-stone: var(--color-pale-stone);
+  --color-bone: var(--color-bone);
+  --color-chalk: var(--color-chalk);
+  --color-ink-black: var(--color-ink-black);
+  --color-signal-orange: var(--color-signal-orange);
+  --color-metric-green: var(--color-metric-green);
+  --color-surface: var(--color-surface);
+  --color-surface-dim: var(--color-surface-dim);
+  --color-surface-bright: var(--color-surface-bright);
+  --color-surface-container-lowest: var(--color-surface-container-lowest);
+  --color-surface-container-low: var(--color-surface-container-low);
+  --color-surface-container: var(--color-surface-container);
+  --color-surface-container-high: var(--color-surface-container-high);
+  --color-surface-container-highest: var(--color-surface-container-highest);
+  --color-on-surface: var(--color-on-surface);
+  --color-on-surface-variant: var(--color-on-surface-variant);
+  --color-error: var(--color-error);
+  --color-error-container: var(--color-error-container);
+  --color-on-error: var(--color-on-error);
+  --color-on-error-container: var(--color-on-error-container);
+
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-geist-sans);
+  --font-body: var(--font-geist-sans);
+  --font-label-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* --- Base Styles --- */
+body {
+  background-color: var(--color-obsidian-canvas);
+  color: var(--color-bone);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Selection --- */
+::selection {
+  background-color: var(--color-bone);
+  color: var(--color-ink-black);
+}
+
+/* --- Scrollbar Styling --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-ash-stroke);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-graphite-mid);
+}
+
+/* --- Hide Scrollbar Utility --- */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --- Material Symbols --- */
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+/* --- Animations --- */
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.15);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.animate-status-pulse {
+  animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* --- Grain Texture Overlay --- */
+.grain-overlay {
+  position: relative;
+}
+
+.grain-overlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* --- Active Press Effect --- */
+.press-effect:active {
+  transform: scale(0.98);
 }

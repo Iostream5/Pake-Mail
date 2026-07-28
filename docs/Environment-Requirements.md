@@ -110,7 +110,7 @@ Untuk mengirim email via Gmail API, user harus terautentikasi via OAuth 2.0 deng
 |---|---|---|
 | `GOOGLE_CLIENT_ID` | Client ID dari Google Cloud Console | `[XXXXXXXX].apps.googleusercontent.com` |
 | `GOOGLE_CLIENT_SECRET` | Client Secret dari Google Cloud Console | `GOCSPX-[XXXXXXXX]` |
-| `GOOGLE_REDIRECT_URI` | Redirect URI setelah OAuth login | `http://localhost:3000/api/auth/callback/google` (dev) / `https://[your-domain].com/api/auth/callback/google` (prod) |
+| `GOOGLE_REDIRECT_URI` | Redirect URI Gmail Connect Mail OAuth callback | `http://localhost:3000/api/email-accounts/callback` (dev) / `https://[your-domain].com/api/email-accounts/callback` (prod) |
 | `GOOGLE_REFRESH_TOKEN` | Refresh token untuk akses jangka panjang (disimpan per user di DB) | Dihasilkan saat OAuth flow |
 
 **Cara mendapatkan:**
@@ -120,7 +120,7 @@ Untuk mengirim email via Gmail API, user harus terautentikasi via OAuth 2.0 deng
 4. Buka **APIs & Services > Credentials** → **Create Credentials > OAuth client ID**
    - Application type: **Web application**
    - Authorized JavaScript origins: `http://localhost:3000`, `https://[your-domain].com`
-   - Authorized redirect URIs: `http://localhost:3000/api/auth/callback/google`, `https://[your-domain].com/api/auth/callback/google`
+   - Authorized redirect URIs: `http://localhost:3000/api/email-accounts/callback`, `https://[your-domain].com/api/email-accounts/callback`
 5. Catat **Client ID** dan **Client Secret** yang muncul
 6. Buka **APIs & Services > Library** → Cari dan **Enable**:
    - `Gmail API`
@@ -241,7 +241,7 @@ STORAGE_REGION="auto"
 # ---- Google OAuth 2.0 ----
 GOOGLE_CLIENT_ID="YOUR_CLIENT_ID.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="GOCSPX-YOUR_CLIENT_SECRET"
-GOOGLE_REDIRECT_URI="http://localhost:3000/api/auth/callback/google"
+GOOGLE_REDIRECT_URI="http://localhost:3000/api/email-accounts/callback"
 
 # ---- OAuth Token Encryption ----
 OAUTH_TOKEN_ENCRYPTION_KEY="YOUR_32_BYTE_HEX_KEY"

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #101010;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bone-card-texture {
+            background-image: url("https://www.transparenttextures.com/patterns/film-grain.png");
+        }
+        @keyframes pulse-status {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+        }
+        .status-pulse {
+            animation: pulse-status 2s infinite ease-in-out;
+        }
+        .scale-98:active { transform: scale(0.98); }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed-dim": "#cac6c3",
+                      "metric-green": "#a0ca92",
+                      "on-primary-fixed": "#1c1b1b",
+                      "obsidian-canvas": "#101010",
+                      "tertiary-container": "#11100f",
+                      "surface-container-lowest": "#0e0e0e",
+                      "tertiary": "#cac6c3",
+                      "inverse-on-surface": "#313030",
+                      "background": "#141313",
+                      "on-secondary-container": "#b4b5b5",
+                      "tertiary-fixed": "#e6e1df",
+                      "primary": "#c8c6c5",
+                      "surface-dim": "#141313",
+                      "signal-orange": "#ee6018",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "inverse-primary": "#5f5e5e",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "surface-variant": "#353434",
+                      "on-secondary-fixed-variant": "#454747",
+                      "on-surface": "#e5e2e1",
+                      "surface-container-highest": "#353434",
+                      "surface-bright": "#3a3939",
+                      "primary-fixed": "#e5e2e1",
+                      "bone": "#eeeeee",
+                      "surface": "#141313",
+                      "error-container": "#93000a",
+                      "warm-granite": "#8a8380",
+                      "chalk": "#fafafa",
+                      "on-background": "#e5e2e1",
+                      "secondary-fixed": "#e2e2e2",
+                      "surface-container-low": "#1c1b1b",
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "on-tertiary-fixed": "#1d1b1a",
+                      "on-error-container": "#ffdad6",
+                      "outline-variant": "#444748",
+                      "on-tertiary-container": "#7f7c7a",
+                      "error": "#ffb4ab",
+                      "graphite-mid": "#4d4947",
+                      "secondary": "#c6c6c7",
+                      "on-tertiary": "#32302f",
+                      "ink-black": "#060505",
+                      "pale-stone": "#b8b3b0",
+                      "on-error": "#690005",
+                      "carbon-lift": "#1d1a18",
+                      "surface-tint": "#c8c6c5",
+                      "on-tertiary-fixed-variant": "#484645",
+                      "surface-container-high": "#2b2a2a",
+                      "ash-stroke": "#3d3a39",
+                      "inverse-surface": "#e5e2e1",
+                      "on-primary-fixed-variant": "#474646",
+                      "secondary-container": "#454747",
+                      "on-secondary": "#2f3131",
+                      "primary-container": "#101010",
+                      "on-primary": "#313030",
+                      "on-primary-container": "#7d7c7b",
+                      "surface-container": "#201f1f",
+                      "on-surface-variant": "#c4c7c7",
+                      "outline": "#8e9192"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "xs": "8px",
+                      "lg": "40px",
+                      "max-width": "1200px",
+                      "md": "24px",
+                      "sm": "16px",
+                      "xl": "80px",
+                      "base": "8px",
+                      "section-gap": "96px"
+              },
+              "fontFamily": {
+                      "display": ["Geist"],
+                      "body-sm": ["Geist"],
+                      "headline-lg": ["Geist"],
+                      "headline-md": ["Geist"],
+                      "headline-lg-mobile": ["Geist"],
+                      "label-mono": ["JetBrains Mono"],
+                      "body": ["Geist"]
+              },
+              "fontSize": {
+                      "display": ["72px", {"lineHeight": "72px", "letterSpacing": "-2.88px", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0px", "fontWeight": "400"}],
+                      "headline-lg": ["44px", {"lineHeight": "49px", "letterSpacing": "-1.1px", "fontWeight": "400"}],
+                      "headline-md": ["36px", {"lineHeight": "40px", "letterSpacing": "-1.12px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["32px", {"lineHeight": "36px", "letterSpacing": "-0.8px", "fontWeight": "400"}],
+                      "label-mono": ["12px", {"lineHeight": "12px", "letterSpacing": "-0.24px", "fontWeight": "400"}],
+                      "body": ["16px", {"lineHeight": "24px", "letterSpacing": "0px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-obsidian-canvas text-bone font-body">
+<!-- TopAppBar -->
+<header class="fixed top-0 z-50 bg-obsidian-canvas text-bone border-b border-ash-stroke flex justify-between items-center w-full px-sm md:px-lg h-16">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-bone scale-98 active:opacity-80 p-2 hover:bg-carbon-lift transition-colors duration-200">menu</button>
+<h1 class="font-display text-headline-md text-bone uppercase tracking-tighter">Pake Mail</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex flex-col items-end mr-2 hidden md:flex">
+<span class="font-label-mono text-[10px] text-warm-granite uppercase tracking-widest">System Status</span>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-metric-green status-pulse"></span>
+<span class="font-label-mono text-[12px] text-metric-green">OPERATIONAL</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-carbon-lift border border-ash-stroke flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional user profile portrait of a modern software engineer, shot in a moody high-contrast lighting setup. The background is a dark obsidian canvas with subtle structural lines. The aesthetic is monochromatic and technical, reflecting a mission control environment with sharp focus and minimal distractions." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6lGvD9iKMnTgDB6d7pBxYUJReQSGwiBai0H6N0QFehiUDdFE4UBqlKh29T2dgm8XLWNYcezplGrrmu6n2aKhTKehGceZ67ajiOjz1qfJn_4_0gIBnC2LGyBvRXQkNUenOj4hUrktsrmsOMUPrMokVH93eD1yibtn-tOp6q34pvaKxL83hC6lYKR_Swuag9bfO21qIarsMSM_bO2_nBgPdoj0uI8tUK4G-qnO09edUlOszlCRyzciGviilLIpR9gHuETMcnvDeB6ci"/>
+</div>
+</div>
+</header>
+<!-- NavigationDrawer -->
+<aside class="fixed left-0 top-0 h-full w-72 bg-carbon-lift border-r border-ash-stroke flex flex-col py-lg z-40 hidden md:flex pt-20">
+<div class="px-6 mb-8">
+<h2 class="font-label-mono text-label-mono uppercase tracking-widest text-warm-granite">SYSTEM_OPERATIONS</h2>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="bg-obsidian-canvas text-bone border-l-2 border-bone flex items-center px-4 py-3 gap-4 font-label-mono text-label-mono uppercase tracking-widest transition-all duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="text-warm-granite flex items-center px-4 py-3 gap-4 border-l-2 border-transparent font-label-mono text-label-mono uppercase tracking-widest hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined">person</span>
+<span>Profile</span>
+</a>
+<a class="text-warm-granite flex items-center px-4 py-3 gap-4 border-l-2 border-transparent font-label-mono text-label-mono uppercase tracking-widest hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Documents</span>
+</a>
+<a class="text-warm-granite flex items-center px-4 py-3 gap-4 border-l-2 border-transparent font-label-mono text-label-mono uppercase tracking-widest hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined">style</span>
+<span>Template</span>
+</a>
+<a class="text-warm-granite flex items-center px-4 py-3 gap-4 border-l-2 border-transparent font-label-mono text-label-mono uppercase tracking-widest hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Recipients</span>
+</a>
+<a class="text-warm-granite flex items-center px-4 py-3 gap-4 border-l-2 border-transparent font-label-mono text-label-mono uppercase tracking-widest hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span>Batches</span>
+</a>
+<a class="text-warm-granite flex items-center px-4 py-3 gap-4 border-l-2 border-transparent font-label-mono text-label-mono uppercase tracking-widest hover:bg-obsidian-canvas hover:text-bone transition-all duration-150" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span>Email Accounts</span>
+</a>
+</nav>
+<div class="px-6 pt-lg border-t border-ash-stroke mt-lg">
+<button class="w-full bg-chalk text-ink-black py-3 rounded-[3px] font-label-mono text-label-mono uppercase tracking-widest hover:bg-bone transition-colors scale-98 active:opacity-90">
+                New Dispatch
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-72 pt-24 px-sm md:px-lg pb-xl min-h-screen">
+<div class="max-w-max-width mx-auto">
+<!-- Welcome Header -->
+<section class="mb-section-gap">
+<div class="flex flex-col gap-2">
+<span class="font-label-mono text-label-mono text-warm-granite uppercase tracking-widest">Initialization Complete</span>
+<h2 class="font-display text-headline-lg-mobile md:text-headline-lg text-bone">Selamat datang, User!</h2>
+<p class="text-warm-granite max-w-xl">Your high-stakes information management system is ready. No active batches detected. Initialize a new widget or document to begin operations.</p>
+</div>
+</section>
+<!-- Bento Grid Empty State -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+<!-- Large Canvas Placeholder -->
+<div class="md:col-span-8 h-[450px] relative rounded-xl border border-ash-stroke bg-carbon-lift overflow-hidden group">
+<div class="absolute inset-0 flex flex-col items-center justify-center p-lg text-center">
+<div class="mb-6 w-16 h-16 rounded-full border-2 border-dashed border-ash-stroke flex items-center justify-center">
+<span class="material-symbols-outlined text-warm-granite text-3xl">add_chart</span>
+</div>
+<h3 class="font-display text-headline-md text-bone mb-2">Main Visualization</h3>
+<p class="text-warm-granite text-body max-w-md">No analytical data available for rendering. Connect an email account or upload a batch to see metrics.</p>
+<button class="mt-8 px-6 py-2 border border-ash-stroke text-bone rounded-[3px] font-label-mono text-label-mono uppercase tracking-widest hover:bg-carbon-lift transition-colors">
+                            Configure Source
+                        </button>
+</div>
+<!-- Background aesthetic pattern -->
+<div class="absolute bottom-0 right-0 w-64 h-64 opacity-5 pointer-events-none">
+<svg class="w-full h-full fill-bone" viewbox="0 0 100 100">
+<path d="M0 100 L100 100 L100 0 Z"></path>
+</svg>
+</div>
+</div>
+<!-- Side Widget Slots -->
+<div class="md:col-span-4 flex flex-col gap-md">
+<!-- Quick Stats Placeholder -->
+<div class="flex-1 rounded-xl border border-ash-stroke p-sm bg-obsidian-canvas flex flex-col justify-between">
+<div>
+<span class="font-label-mono text-[10px] text-warm-granite uppercase tracking-widest">Session_Metrics</span>
+<div class="mt-4 flex flex-col gap-3">
+<div class="flex justify-between items-center border-b border-ash-stroke/30 pb-2">
+<span class="text-warm-granite text-sm">Active Connections</span>
+<span class="text-bone font-label-mono">00</span>
+</div>
+<div class="flex justify-between items-center border-b border-ash-stroke/30 pb-2">
+<span class="text-warm-granite text-sm">Pending Batches</span>
+<span class="text-bone font-label-mono">00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-warm-granite text-sm">Credits Remaining</span>
+<span class="text-bone font-label-mono">1,000</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-ash-stroke">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-signal-orange status-pulse"></span>
+<span class="font-label-mono text-[10px] text-signal-orange uppercase">Awaiting Input</span>
+</div>
+</div>
+</div>
+<!-- Action Card -->
+<div class="bg-bone bone-card-texture rounded-xl p-6 h-[200px] flex flex-col justify-between shadow-lg">
+<h4 class="font-display text-2xl text-ink-black font-bold leading-tight">Start with a<br/>New Template</h4>
+<div class="flex justify-between items-end">
+<span class="material-symbols-outlined text-ink-black text-4xl">post_add</span>
+<button class="bg-ink-black text-bone px-4 py-2 rounded-lg font-label-mono text-label-mono uppercase tracking-widest scale-98 active:opacity-80">
+                                Create
+                            </button>
+</div>
+</div>
+</div>
+<!-- Footer Bento Slots -->
+<div class="md:col-span-4 h-48 rounded-xl border border-ash-stroke bg-carbon-lift p-sm flex flex-col justify-center items-center text-center">
+<span class="material-symbols-outlined text-warm-granite mb-2">history</span>
+<p class="font-label-mono text-[10px] text-warm-granite uppercase tracking-widest">Recent Activity: NULL</p>
+</div>
+<div class="md:col-span-4 h-48 rounded-xl border border-ash-stroke bg-obsidian-canvas p-sm flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="font-label-mono text-[10px] text-warm-granite uppercase tracking-widest">Cloud_Sync</span>
+<span class="material-symbols-outlined text-warm-granite text-sm">cloud_done</span>
+</div>
+<div class="text-center pb-4">
+<p class="text-warm-granite text-sm italic">All systems synced to encrypted vault.</p>
+</div>
+<div class="w-full bg-ash-stroke h-1 rounded-full overflow-hidden">
+<div class="bg-metric-green h-full w-[100%]"></div>
+</div>
+</div>
+<div class="md:col-span-4 h-48 rounded-xl border border-ash-stroke bg-carbon-lift group cursor-pointer hover:border-bone transition-colors p-sm flex flex-col justify-center items-center gap-2">
+<span class="material-symbols-outlined text-bone text-3xl group-hover:scale-110 transition-transform">help_center</span>
+<p class="font-label-mono text-label-mono text-bone uppercase tracking-widest">Open Documentation</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Simple Atmospheric Script -->
+<script>
+        // Subtle mouse tracking for light effect
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            // Potentially add a subtle radial gradient that follows mouse if performance allows
+        });
+
+        // Initialize micro-interactions
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.style.transform = 'scale(0.97)';
+            });
+            el.addEventListener('mouseup', () => {
+                el.style.transform = '';
+            });
+            el.addEventListener('mouseleave', () => {
+                el.style.transform = '';
+            });
+        });
+    </script>
+</body></html>

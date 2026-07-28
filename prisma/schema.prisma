@@ -1,0 +1,274 @@
+// Prisma schema — Pake Mail
+// Turunan langsung dari pakemail-erd.mermaid
+// Stack: PostgreSQL + Prisma (sesuai rekomendasi PRD §11)
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── ENUMS ───────────────────────────────────────────────
+
+enum EmailProvider {
+  GMAIL
+  OUTLOOK
+}
+
+enum DocumentCategory {
+  CV
+  PORTFOLIO
+  IJAZAH
+  SKCK
+  TRANSKRIP
+  OTHER
+}
+
+enum BatchStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  PAUSED
+  COMPLETED
+  STOPPED
+  FAILED
+}
+
+enum RecipientStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+  RETRY
+  APPLIED
+  REPLY
+  INTERVIEW
+  TECHNICAL_TEST
+  HR_INTERVIEW
+  OFFERING
+  ACCEPTED
+}
+
+// ─── CORE ────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  name          String
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+
+  accounts      Account[]
+  sessions      Session[]
+  emailAccounts EmailAccount[]
+  profile       Profile?
+  documents     Document[]
+  templates     EmailTemplate[]
+  recipients    Recipient[]
+  batches       Batch[]
+  activityLogs  ActivityLog[]
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailAccount {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider    EmailProvider
+  email       String
+  oauthToken  String        // encrypted at rest
+  isDefault   Boolean       @default(false)
+  dailyLimit  Int           @default(500)
+  connectedAt DateTime      @default(now())
+
+  batches Batch[]
+
+  @@unique([userId, email])
+}
+
+model Profile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName      String
+  phone         String?
+  email         String?
+  linkedinUrl   String?
+  portfolioUrl  String?
+  address       String?
+  birthDate     DateTime?
+
+  educations  Education[]
+  experiences Experience[]
+}
+
+model Education {
+  id          String  @id @default(uuid())
+  profileId   String
+  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  institution String
+  degree      String?
+  major       String?
+  startYear   Int?
+  endYear     Int?
+}
+
+model Experience {
+  id          String    @id @default(uuid())
+  profileId   String
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  company     String
+  position    String
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?
+}
+
+// ─── ASSETS (reusable) ──────────────────────────────────
+
+model Document {
+  id          String           @id @default(uuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  category    DocumentCategory
+  fileUrl     String
+  fileSizeKb  Int
+  version     Int              @default(1)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  batchDocuments BatchDocument[]
+}
+
+model EmailTemplate {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  subject    String
+  body       String
+  closing    String?
+  isFavorite Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  batches Batch[]
+}
+
+model Recipient {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String
+  hrEmail     String
+  position    String?
+  location    String?
+  website     String?
+  source      String?
+  notes       String?
+  tags        String?
+  createdAt   DateTime @default(now())
+
+  batchRecipients BatchRecipient[]
+
+  @@unique([userId, hrEmail]) // basis duplicate detection (FR-5.5)
+}
+
+// ─── BATCH (core) ────────────────────────────────────────
+
+model Batch {
+  id                 String      @id @default(uuid())
+  userId             String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailAccountId     String
+  emailAccount       EmailAccount @relation(fields: [emailAccountId], references: [id])
+  templateId         String
+  template           EmailTemplate @relation(fields: [templateId], references: [id])
+  name               String
+  description        String?
+  status             BatchStatus @default(DRAFT)
+  scheduledAt        DateTime?
+  delaySeconds        Int         @default(60)
+  activeHoursStart   String?     // "08:00"
+  activeHoursEnd     String?     // "17:00"
+  activeDays         String?     // "MON,TUE,WED,THU,FRI"
+  retryMax           Int         @default(2)
+  autoStopThreshold  Float       @default(0.3) // 30% failure rate
+  createdAt          DateTime    @default(now())
+
+  batchDocuments   BatchDocument[]
+  batchRecipients  BatchRecipient[]
+  activityLogs     ActivityLog[]
+}
+
+model BatchDocument {
+  id         String   @id @default(uuid())
+  batchId    String
+  batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id])
+
+  @@unique([batchId, documentId])
+}
+
+model BatchRecipient {
+  id          String          @id @default(uuid())
+  batchId     String
+  batch       Batch           @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   Recipient       @relation(fields: [recipientId], references: [id])
+  status      RecipientStatus @default(PENDING)
+  sentAt      DateTime?
+  errorLog    String?
+  retryCount  Int             @default(0)
+  updatedAt   DateTime        @updatedAt
+
+  activityLogs ActivityLog[]
+
+  @@unique([batchId, recipientId])
+}
+
+model ActivityLog {
+  id               String          @id @default(uuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  batchId          String?
+  batch            Batch?          @relation(fields: [batchId], references: [id])
+  batchRecipientId String?
+  batchRecipient   BatchRecipient? @relation(fields: [batchRecipientId], references: [id])
+  eventType        String
+  message          String
+  createdAt        DateTime        @default(now())
+}
