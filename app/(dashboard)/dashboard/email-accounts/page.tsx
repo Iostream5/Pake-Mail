@@ -8,7 +8,6 @@ export default async function EmailAccountsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Akun Email</h1>
       <EmailAccountsList />
     </div>
   )

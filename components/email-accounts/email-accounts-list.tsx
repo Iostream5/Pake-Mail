@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Icon } from "@/components/ui/icon"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface EmailAccount {
   id: string
@@ -12,6 +14,10 @@ interface EmailAccount {
   isDefault: boolean
   dailyLimit: number
   connectedAt: string
+}
+
+function getInitials(email: string) {
+  return email[0].toUpperCase()
 }
 
 export function EmailAccountsList() {
@@ -107,77 +113,126 @@ export function EmailAccountsList() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
-                <div className="flex-1">
-                  <div className="h-4 w-1/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                  <div className="mt-1 h-3 w-1/4 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Akun Email</h1>
-        <Button onClick={handleConnectGmail} loading={connecting}>
-          {connecting ? "Menghubungkan..." : "Hubungkan Gmail"}
-        </Button>
+      <div>
+        <h1 className="font-[family-name:var(--font-geist-sans)] text-2xl text-bone font-medium tracking-tight">
+          Akun Email
+        </h1>
+        <p className="text-sm text-warm-granite mt-0.5">
+          {accounts.length > 0
+            ? `${accounts.length} akun ${accounts.length > 1 ? "terhubung" : "terhubung"}`
+            : "Hubungkan akun Gmail untuk mengirim lamaran"}
+        </p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div className="rounded-[3px] border border-signal-orange/30 bg-signal-orange/10 p-3 text-xs text-signal-orange">
           {error}
         </div>
       )}
 
       {/* Info box */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-        <p className="font-medium">Penting</p>
-        <p className="mt-1">
-          Batch lamaran membutuhkan minimal 1 akun email yang terhubung. 
-          Gmail gratis memiliki batas ±500 email/hari. Gunakan Google Workspace untuk volume lebih besar.
-        </p>
+      <Card variant="dark" className="border-signal-orange/20">
+        <CardContent className="p-4 flex items-start gap-3">
+          <Icon name="info" size="sm" className="text-signal-orange mt-0.5 shrink-0" />
+          <div>
+            <p className="text-xs font-medium text-bone">Penting</p>
+            <p className="text-[11px] text-warm-granite mt-0.5 leading-relaxed">
+              Batch lamaran membutuhkan minimal 1 akun email yang terhubung.
+              Gmail gratis memiliki batas ±500 email/hari. Gunakan Google Workspace untuk volume lebih besar.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Connect button */}
+      <div className="flex justify-end">
+        <Button onClick={handleConnectGmail} loading={connecting}>
+          <Icon name="add" size="sm" />
+          {connecting ? "Menghubungkan..." : "Hubungkan Gmail"}
+        </Button>
       </div>
 
-      {/* Account List */}
-      {accounts.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500">
-            Belum ada akun email terhubung. Klik "Hubungkan Gmail" untuk memulai.
-          </p>
-        </div>
-      ) : (
+      {/* Loading */}
+      {loading && (
         <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <Card key={i} variant="dark">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <Skeleton className="h-8 w-28 rounded-[3px]" />
+                  <Skeleton className="h-8 w-20 rounded-[3px]" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && accounts.length === 0 && (
+        <Card variant="dark">
+          <CardContent className="py-12 text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="h-14 w-14 rounded-full bg-carbon-lift flex items-center justify-center border border-ash-stroke">
+                <Icon name="mail" size="lg" className="text-warm-granite" />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-bone font-medium">Belum ada akun terhubung</p>
+              <p className="text-xs text-warm-granite mt-1 max-w-xs mx-auto">
+                Hubungkan akun Gmail untuk mulai mengirim lamaran secara otomatis
+              </p>
+            </div>
+            <Button onClick={handleConnectGmail} loading={connecting}>
+              <Icon name="add" size="sm" />
+              Hubungkan Gmail
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Account list */}
+      {!loading && accounts.length > 0 && (
+        <div className="space-y-2.5">
           {accounts.map((account) => (
-            <Card key={account.id}>
+            <Card key={account.id} variant="dark" className="hover:border-bone/30 transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                      {account.provider[0]}
+                    <div className="h-10 w-10 rounded-full bg-metric-green/15 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-metric-green">
+                        {getInitials(account.email)}
+                      </span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{account.email}</p>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-zinc-500">{account.provider}</span>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-bone">{account.email}</p>
                         {account.isDefault && (
                           <Badge variant="info">Default</Badge>
                         )}
-                        <span className="text-xs text-zinc-400">
-                          Limit: ~{account.dailyLimit}/hari
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-warm-granite">{account.provider}</span>
+                        <span className="text-warm-granite/50">•</span>
+                        <span className="text-xs text-warm-granite">
+                          Limit ~{account.dailyLimit}/hari
+                        </span>
+                        <span className="text-warm-granite/50">•</span>
+                        <span className="text-[10px] text-warm-granite/60">
+                          {formatDate(account.connectedAt)}
                         </span>
                       </div>
                     </div>
@@ -185,7 +240,7 @@ export function EmailAccountsList() {
                   <div className="flex items-center gap-2">
                     {!account.isDefault && (
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleSetDefault(account.id)}
                       >
@@ -195,7 +250,7 @@ export function EmailAccountsList() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700"
+                      className="text-signal-orange hover:text-signal-orange hover:bg-signal-orange/10"
                       onClick={() => handleDelete(account.id)}
                     >
                       Putuskan

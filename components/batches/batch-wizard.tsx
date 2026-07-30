@@ -38,6 +38,8 @@ interface Recipient {
 const STEPS = ["Name", "Email", "Template", "Documents", "Recipients", "Schedule", "Preview"]
 const DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
+const DRAFT_KEY = "batch-wizard-draft"
+
 export function BatchWizard() {
   const router = useRouter()
   const [step, setStep] = useState(0)
@@ -64,6 +66,9 @@ export function BatchWizard() {
   const [recipients, setRecipients] = useState<Recipient[]>([])
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([])
   const [recipientSearch, setRecipientSearch] = useState("")
+  const [reapplyWarnings, setReapplyWarnings] = useState<Array<{companyName: string; hrEmail: string; previousBatchName: string; daysAgo: number}>>([])
+  const [showReapplyWarning, setShowReapplyWarning] = useState(false)
+  const [suggestedDocIds, setSuggestedDocIds] = useState<string[]>([])
 
   // Step 6
   const [scheduledAt, setScheduledAt] = useState("")
@@ -116,6 +121,51 @@ export function BatchWizard() {
     } catch {}
   }, [recipientSearch])
 
+  // Restore draft on mount (client-only, after hydration)
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY)
+      if (raw) {
+        const data = JSON.parse(raw)
+        if (data.step) setStep(data.step)
+        if (data.name) setName(data.name)
+        if (data.description) setDescription(data.description)
+        if (data.selectedAccount) setSelectedAccount(data.selectedAccount)
+        if (data.selectedTemplate) setSelectedTemplate(data.selectedTemplate)
+        if (data.selectedDocs) setSelectedDocs(data.selectedDocs)
+        if (data.selectedRecipients) setSelectedRecipients(data.selectedRecipients)
+        if (data.scheduledAt) setScheduledAt(data.scheduledAt)
+        if (data.delaySeconds) setDelaySeconds(data.delaySeconds)
+        if (data.activeHoursStart) setActiveHoursStart(data.activeHoursStart)
+        if (data.activeHoursEnd) setActiveHoursEnd(data.activeHoursEnd)
+        if (data.activeDays) setActiveDays(data.activeDays)
+        if (data.startImmediately !== undefined) setStartImmediately(data.startImmediately)
+      }
+    } catch {}
+    setHydrated(true)
+  }, [])
+
+  // Auto-save draft to localStorage after hydrate
+  useEffect(() => {
+    if (!hydrated) return
+    const data = {
+      step, name, description, selectedAccount, selectedTemplate,
+      selectedDocs, selectedRecipients, scheduledAt, delaySeconds,
+      activeHoursStart, activeHoursEnd, activeDays, startImmediately,
+    }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(data))
+  }, [
+    hydrated, step, name, description, selectedAccount, selectedTemplate,
+    selectedDocs, selectedRecipients, scheduledAt, delaySeconds,
+    activeHoursStart, activeHoursEnd, activeDays, startImmediately,
+  ])
+
+  const handleCancel = () => {
+    localStorage.removeItem(DRAFT_KEY)
+    router.push("/dashboard/batches")
+  }
+
   useEffect(() => {
     if (step === 1) fetchAccounts()
   }, [step, fetchAccounts])
@@ -131,6 +181,36 @@ export function BatchWizard() {
   useEffect(() => {
     if (step === 4) fetchRecipients()
   }, [step, fetchRecipients])
+
+  useEffect(() => {
+    if (selectedRecipients.length === 0) { setReapplyWarnings([]); return }
+    const selected = recipients.filter(r => selectedRecipients.includes(r.id))
+    const emails = selected.map(r => r.hrEmail)
+    fetch("/api/batches/reapply-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hrEmails: emails }),
+    }).then(res => res.json()).then(data => {
+      setReapplyWarnings(data.warnings || [])
+    }).catch(() => {})
+  }, [selectedRecipients, recipients])
+
+  useEffect(() => {
+    if (step === 3 && documents.length > 0 && selectedRecipients.length > 0) {
+      const selected = recipients.filter(r => selectedRecipients.includes(r.id))
+      const positions = selected.map(r => r.position).filter((p): p is string => p !== null)
+      if (positions.length > 0) {
+        const keywords = [...new Set(positions.flatMap(p => p.toLowerCase().split(/\s+/)).filter(k => k.length > 2))]
+        const matchedIds = documents
+          .filter(doc => keywords.some(kw => doc.name.toLowerCase().includes(kw)))
+          .map(d => d.id)
+        setSuggestedDocIds(matchedIds)
+        setSelectedDocs(prev => [...new Set([...prev, ...matchedIds])])
+      }
+    } else if (step !== 3) {
+      setSuggestedDocIds([])
+    }
+  }, [step, documents, selectedRecipients, recipients])
 
   const toggleDoc = (id: string) => {
     setSelectedDocs((p) => p.includes(id) ? p.filter((d) => d !== id) : [...p, id])
@@ -222,6 +302,7 @@ export function BatchWizard() {
         }
       }
 
+      localStorage.removeItem(DRAFT_KEY)
       router.push(`/dashboard/batches/${batchId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create batch")
@@ -340,6 +421,9 @@ export function BatchWizard() {
           <div className="space-y-6">
             <h3 className="text-lg font-mono text-bone uppercase tracking-widest">Select documents (optional)</h3>
             {documents.length === 0 && <p className="text-sm text-warm-granite font-mono">No documents found.</p>}
+            {suggestedDocIds.length > 0 && (
+              <p className="text-xs font-mono text-metric-green mb-2">{suggestedDocIds.length} dokumen tersarankan berdasarkan posisi recipient</p>
+            )}
             <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
               {documents.map((doc) => (
                 <button
@@ -404,6 +488,18 @@ export function BatchWizard() {
             </div>
             {selectedRecipients.length > 0 && (
               <p className="text-xs font-mono text-signal-orange">{selectedRecipients.length} recipient(s) selected</p>
+            )}
+            {reapplyWarnings.length > 0 && (
+              <div className="space-y-2 mt-4">
+                {reapplyWarnings.map((w, i) => (
+                  <div key={i} className="rounded border border-signal-orange/30 bg-signal-orange/5 p-3">
+                    <p className="text-xs text-signal-orange">
+                      <strong>{w.companyName}</strong> sudah dilamar {w.daysAgo} hari lalu (batch: {w.previousBatchName}), belum ada balasan.
+                    </p>
+                    <p className="text-[10px] text-warm-granite mt-1">Tetap lanjutkan? Anda bisa melanjutkan, ini hanya peringatan.</p>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
@@ -540,13 +636,23 @@ export function BatchWizard() {
       </Card>
 
       <div className="flex items-center justify-between pt-4 border-t border-ash-stroke">
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          disabled={step === 0}
-        >
-          BACK
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-error border-error-container/30 hover:bg-error-container/20 hover:text-on-error-container"
+            onClick={handleCancel}
+          >
+            Batalkan
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            disabled={step === 0}
+          >
+            BACK
+          </Button>
+        </div>
         {step < STEPS.length - 1 ? (
           <Button
             variant="primary"

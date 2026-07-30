@@ -5,6 +5,17 @@ import { uploadFile } from "@/lib/storage"
 const MAX_SIZE = (Number(process.env.MAX_FILE_SIZE_MB) ?? 10) * 1024 * 1024
 const ALLOWED_TYPES = (process.env.ALLOWED_FILE_TYPES ?? ".pdf,.docx,.jpg,.png").split(",")
 
+const CATEGORY_LIMITS: Record<string, number> = {
+  SURAT_LAMARAN: 2,
+  CV: 3,
+  IJAZAH: 1,
+  SKCK: 1,
+  TRANSKRIP: 1,
+  SERTIFIKAT: 7,
+  PAS_FOTO: 2,
+  OTHER: 5,
+}
+
 export async function POST(request: Request) {
   return handleApi(async () => {
     const userId = await requireUserId()
@@ -23,6 +34,12 @@ export async function POST(request: Request) {
 
   if (file.size > MAX_SIZE) {
     return apiError(`File too large. Max ${MAX_SIZE / 1024 / 1024}MB`)
+  }
+
+  const count = await prisma.document.count({ where: { userId, category: category as any } })
+  const limit = CATEGORY_LIMITS[category]
+  if (limit !== undefined && count >= limit) {
+    return apiError(`Maksimal ${limit} file untuk kategori ini`, 400)
   }
 
   const buffer = Buffer.from(await file.arrayBuffer())

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
+import { Icon } from "@/components/ui/icon"
 
 interface Document {
   id: string
@@ -18,26 +19,38 @@ interface Document {
   createdAt: string
 }
 
-const CATEGORIES = [
-  { value: "ALL", label: "Semua" },
-  { value: "CV", label: "CV" },
-  { value: "PORTFOLIO", label: "Portfolio" },
-  { value: "IJAZAH", label: "Ijazah" },
-  { value: "SKCK", label: "SKCK" },
-  { value: "TRANSKRIP", label: "Transkrip" },
-  { value: "OTHER", label: "Lainnya" },
-]
+const CATEGORY_LABELS: Record<string, string> = {
+  CV: "CV",
+  SURAT_LAMARAN: "Surat Lamaran",
+  IJAZAH: "Ijazah",
+  SKCK: "SKCK",
+  TRANSKRIP: "Transkrip",
+  SERTIFIKAT: "Sertifikat",
+  PAS_FOTO: "Pas Foto",
+  OTHER: "Lainnya",
+}
 
-const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c.value !== "ALL").map((c) => ({
-  value: c.value,
-  label: c.label,
+const CATEGORY_LIMITS: Record<string, number> = {
+  SURAT_LAMARAN: 2,
+  CV: 3,
+  IJAZAH: 1,
+  SKCK: 1,
+  TRANSKRIP: 1,
+  SERTIFIKAT: 7,
+  PAS_FOTO: 2,
+  OTHER: 5,
+}
+
+const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
+  value,
+  label,
 }))
 
 export function DocumentList() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [activeCategory, setActiveCategory] = useState("ALL")
+  const [search, setSearch] = useState("")
   const [uploading, setUploading] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
   const [uploadName, setUploadName] = useState("")
@@ -66,6 +79,21 @@ export function DocumentList() {
   useEffect(() => {
     fetchDocuments()
   }, [fetchDocuments])
+
+  const categoryCounts = documents.reduce<Record<string, number>>((acc, d) => {
+    acc[d.category] = (acc[d.category] || 0) + 1
+    return acc
+  }, {})
+
+  const q = search.toLowerCase()
+  const filtered = search
+    ? documents.filter(
+        (d) =>
+          d.name.toLowerCase().includes(q) ||
+          d.category.toLowerCase().includes(q) ||
+          (CATEGORY_LABELS[d.category] || "").toLowerCase().includes(q)
+      )
+    : documents
 
   const handleUpload = async () => {
     if (!uploadFile) return
@@ -106,20 +134,20 @@ export function DocumentList() {
     }
   }
 
-  const filtered = activeCategory === "ALL" ? documents : documents.filter((d) => d.category === activeCategory)
-
   function formatSize(kb: number) {
     if (kb >= 1024) return `${(kb / 1024).toFixed(1)} MB`
     return `${kb} KB`
   }
 
   function getCategoryBadge(category: string) {
-    const map: Record<string, "default" | "success" | "warning" | "danger" | "info"> = {
+    const map: Record<string, "default" | "success" | "warning" | "danger" | "info" | "orange"> = {
       CV: "info",
-      PORTFOLIO: "success",
+      SURAT_LAMARAN: "success",
       IJAZAH: "warning",
       SKCK: "danger",
       TRANSKRIP: "default",
+      SERTIFIKAT: "orange",
+      PAS_FOTO: "default",
       OTHER: "default",
     }
     return map[category] || "default"
@@ -129,11 +157,11 @@ export function DocumentList() {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Card key={i}>
+          <Card key={i} variant="dark">
             <CardContent className="p-4">
-              <div className="h-10 w-10 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
-              <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-              <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
+              <div className="h-10 w-10 animate-pulse rounded-lg bg-carbon-lift" />
+              <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-carbon-lift" />
+              <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-carbon-lift" />
             </CardContent>
           </Card>
         ))}
@@ -144,52 +172,47 @@ export function DocumentList() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="overflow-x-auto pb-1">
-          <div className="flex gap-1 border-b border-zinc-200 pb-1 dark:border-zinc-800">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => setActiveCategory(cat.value)}
-              className={`rounded-t-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeCategory === cat.value
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-                  : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <Icon name="search" size="sm" className="text-warm-granite" />
+          </div>
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari dokumen..."
+            className="pl-10"
+          />
         </div>
         <Button size="sm" onClick={() => setShowUpload(true)}>
+          <Icon name="add" size="sm" />
           Upload Dokumen
         </Button>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div className="rounded-lg border border-red-800 bg-red-900/20 p-3 text-sm text-red-400">
           {error}
         </div>
       )}
 
       {/* Document Grid */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
-          <p className="text-sm text-zinc-500">
-            {activeCategory === "ALL"
-              ? "Belum ada dokumen. Upload dokumen pertama kamu."
-              : "Tidak ada dokumen di kategori ini."}
+        <div className="rounded-xl border border-dashed border-ash-stroke p-12 text-center">
+          <p className="text-sm text-warm-granite">
+            {search
+              ? "Tidak ada dokumen yang cocok dengan pencarian."
+              : "Belum ada dokumen. Upload dokumen pertama kamu."}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((doc) => (
-            <Card key={doc.id}>
+            <Card key={doc.id} variant="dark">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                    <span className="text-sm font-bold text-zinc-600 dark:text-zinc-400">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-carbon-lift">
+                    <span className="text-sm font-bold text-warm-granite">
                       {doc.name[0]?.toUpperCase()}
                     </span>
                   </div>
@@ -197,41 +220,41 @@ export function DocumentList() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-zinc-400 hover:text-blue-600"
+                      className="text-warm-granite hover:text-bone"
                       onClick={() => setPreviewDoc(doc)}
                       title="Preview"
                     >
-                      👁
+                      <Icon name="visibility" size="sm" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-zinc-400 hover:text-amber-600"
+                      className="text-warm-granite hover:text-signal-orange"
                       onClick={() => { setReplaceDoc(doc); setReplaceFile(null) }}
                       title="Ganti file"
                     >
-                      🔄
+                      <Icon name="autorenew" size="sm" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-zinc-400 hover:text-red-600"
+                      className="text-warm-granite hover:text-red-400"
                       onClick={() => handleDelete(doc.id)}
                     >
-                      ✕
+                      <Icon name="delete" size="sm" />
                     </Button>
                   </div>
                 </div>
                 <div className="mt-3">
-                  <p className="text-sm font-medium truncate">{doc.name}</p>
+                  <p className="text-sm font-medium text-bone truncate">{doc.name}</p>
                   <div className="mt-1 flex items-center gap-2">
                     <Badge variant={getCategoryBadge(doc.category)}>
-                      {doc.category}
+                      {CATEGORY_LABELS[doc.category] || doc.category}
                     </Badge>
-                    <span className="text-xs text-zinc-400">{formatSize(doc.fileSizeKb)}</span>
+                    <span className="text-xs text-warm-granite">{formatSize(doc.fileSizeKb)}</span>
                   </div>
                 </div>
-                <p className="mt-2 text-[10px] text-zinc-400">
+                <p className="mt-2 text-[10px] text-warm-granite">
                   v{doc.version} · {new Date(doc.createdAt).toLocaleDateString("id-ID")}
                 </p>
               </CardContent>
@@ -252,13 +275,13 @@ export function DocumentList() {
             type="file"
             onChange={(e) => setReplaceFile(e.target.files?.[0] || null)}
             accept=".pdf,.docx,.jpg,.png"
-            className="block w-full text-sm text-zinc-500 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-400 dark:file:bg-zinc-800 dark:file:text-zinc-300"
+            className="block w-full text-sm text-warm-granite file:mr-4 file:rounded-lg file:border-0 file:bg-carbon-lift file:px-4 file:py-2 file:text-sm file:font-medium file:text-bone hover:file:bg-carbon-lift/80"
           />
           {replaceFile && (
-            <p className="text-xs text-zinc-400">{replaceFile.name} ({(replaceFile.size / 1024).toFixed(0)} KB)</p>
+            <p className="text-xs text-warm-granite">{replaceFile.name} ({(replaceFile.size / 1024).toFixed(0)} KB)</p>
           )}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => { setReplaceDoc(null); setReplaceFile(null) }}>
+            <Button variant="ghost" onClick={() => { setReplaceDoc(null); setReplaceFile(null) }}>
               Batal
             </Button>
             <Button
@@ -294,7 +317,7 @@ export function DocumentList() {
         open={previewDoc !== null}
         onClose={() => setPreviewDoc(null)}
         title={previewDoc?.name ?? "Preview"}
-        description={`Kategori: ${previewDoc?.category ?? "-"}`}
+        description={`Kategori: ${previewDoc ? (CATEGORY_LABELS[previewDoc.category] || previewDoc.category) : "-"}`}
         className="max-w-4xl"
       >
         {previewDoc && (
@@ -327,21 +350,28 @@ export function DocumentList() {
             onChange={(e) => setUploadCategory(e.target.value)}
             options={CATEGORY_OPTIONS}
           />
+          <div className="flex items-center gap-2 text-xs text-warm-granite">
+            <span>Kapasitas:</span>
+            <span className={getCapacityClass(uploadCategory, categoryCounts[uploadCategory] || 0)}>
+              {(categoryCounts[uploadCategory] || 0)}/{CATEGORY_LIMITS[uploadCategory]}
+            </span>
+            <span>terpakai</span>
+          </div>
           <div>
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">File</label>
+            <label className="text-sm font-medium text-bone">File</label>
             <input
               type="file"
               onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
               accept=".pdf,.docx,.jpg,.png"
-              className="mt-1.5 block w-full text-sm text-zinc-500 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-400 dark:file:bg-zinc-800 dark:file:text-zinc-300"
+              className="mt-1.5 block w-full text-sm text-warm-granite file:mr-4 file:rounded-lg file:border-0 file:bg-carbon-lift file:px-4 file:py-2 file:text-sm file:font-medium file:text-bone hover:file:bg-carbon-lift/80"
             />
             {uploadFile && (
-              <p className="mt-1 text-xs text-zinc-400">{uploadFile.name} ({(uploadFile.size / 1024).toFixed(0)} KB)</p>
+              <p className="mt-1 text-xs text-warm-granite">{uploadFile.name} ({(uploadFile.size / 1024).toFixed(0)} KB)</p>
             )}
           </div>
           <div className="flex justify-end gap-2">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => {
                 setShowUpload(false)
                 setUploadName("")
@@ -350,7 +380,11 @@ export function DocumentList() {
             >
               Batal
             </Button>
-            <Button onClick={handleUpload} loading={uploading} disabled={!uploadFile}>
+            <Button
+              onClick={handleUpload}
+              loading={uploading}
+              disabled={!uploadFile || (categoryCounts[uploadCategory] || 0) >= CATEGORY_LIMITS[uploadCategory]}
+            >
               Upload
             </Button>
           </div>
@@ -358,6 +392,14 @@ export function DocumentList() {
       </Dialog>
     </div>
   )
+}
+
+function getCapacityClass(category: string, count: number) {
+  const limit = CATEGORY_LIMITS[category]
+  if (!limit) return "text-warm-granite"
+  if (count >= limit) return "text-red-400 font-medium"
+  if (count >= limit - 1) return "text-signal-orange font-medium"
+  return "text-metric-green"
 }
 
 function PreviewContent({ docId }: { docId: string }) {
@@ -376,14 +418,14 @@ function PreviewContent({ docId }: { docId: string }) {
       .finally(() => setLoading(false))
   }, [docId])
 
-  if (loading) return <div className="text-sm text-zinc-500">Loading preview...</div>
-  if (error) return <div className="text-sm text-red-500">{error}</div>
+  if (loading) return <div className="text-sm text-warm-granite">Loading preview...</div>
+  if (error) return <div className="text-sm text-red-400">{error}</div>
 
   return (
     <div className="w-full h-[70vh]">
       <iframe
         src={url}
-        className="w-full h-full rounded border border-zinc-200 dark:border-zinc-800"
+        className="w-full h-full rounded border border-ash-stroke"
         title="Document preview"
       />
     </div>

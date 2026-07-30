@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { decrypt } from "@/lib/encryption"
 import { getSignedFileUrl } from "@/lib/storage"
+import { categorizeError } from "@/lib/email-errors"
 import { google } from "googleapis"
 
 interface SendJobData {
@@ -140,14 +141,48 @@ export async function processEmailSend(jobData: SendJobData) {
 
   const raw = Buffer.from(mimeParts.join("\n"), "utf-8").toString("base64url")
 
-  await gmail.users.messages.send({
-    userId: "me",
-    requestBody: { raw },
-  })
+  let gmailThreadIdStr: string | null = null
+  let gmailMessageIdStr: string | null = null
+  try {
+    const res = await gmail.users.messages.send({
+      userId: "me",
+      requestBody: { raw },
+    })
+    gmailThreadIdStr = res.data.threadId ?? null
+    gmailMessageIdStr = res.data.id ?? null
+  } catch (sendErr) {
+    const rawMessage = sendErr instanceof Error ? sendErr.message : String(sendErr)
+    const categorized = categorizeError(rawMessage)
+
+    await prisma.batchRecipient.update({
+      where: { id: batchRecipientId },
+      data: {
+        status: "FAILED",
+        errorLog: JSON.stringify({ raw: rawMessage, friendly: categorized.friendlyMessage, category: categorized.category }),
+      },
+    })
+
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        batchId,
+        batchRecipientId,
+        eventType: "EMAIL_FAILED",
+        message: categorized.friendlyMessage,
+      },
+    })
+
+    throw sendErr
+  }
 
   await prisma.batchRecipient.update({
     where: { id: batchRecipientId },
-    data: { status: "SENT", sentAt: new Date() },
+    data: {
+      status: "SENT",
+      sentAt: new Date(),
+      gmailThreadId: gmailThreadIdStr,
+      gmailMessageId: gmailMessageIdStr,
+    },
   })
 
   await prisma.activityLog.create({

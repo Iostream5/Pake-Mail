@@ -8,6 +8,9 @@ export async function POST(request: Request) {
     const profile = await prisma.profile.findUnique({ where: { userId } })
     if (!profile) return apiError("Create profile first")
 
+    const count = await prisma.experience.count({ where: { profileId: profile.id } })
+    if (count >= 10) return apiError("Maksimal 10 data pengalaman", 400)
+
     const body = await request.json()
     const experience = await prisma.experience.create({
       data: { ...body, profileId: profile.id },

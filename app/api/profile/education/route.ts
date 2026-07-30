@@ -8,6 +8,9 @@ export async function POST(request: Request) {
     const profile = await prisma.profile.findUnique({ where: { userId } })
     if (!profile) return apiError("Create profile first")
 
+    const count = await prisma.education.count({ where: { profileId: profile.id } })
+    if (count >= 5) return apiError("Maksimal 5 data pendidikan", 400)
+
     const body = await request.json()
     const education = await prisma.education.create({
       data: { ...body, profileId: profile.id },

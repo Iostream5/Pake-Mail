@@ -1,10 +1,11 @@
 "use client"
 
-import { signOut } from "next-auth/react"
+import Link from "next/link"
 import { useSidebar } from "./dashboard-shell"
 import { Icon } from "@/components/ui/icon"
 import { StatusPulse } from "@/components/ui/status-pulse"
 import { MonoLabel } from "@/components/ui/mono-label"
+import { NotificationBell } from "@/components/notifications/notification-list"
 
 export function Header({ user }: { user: { name?: string | null } }) {
   const { toggle } = useSidebar()
@@ -40,14 +41,16 @@ export function Header({ user }: { user: { name?: string | null } }) {
           <StatusPulse color="green" label="Operational" />
         </div>
 
-        {/* User avatar */}
-        <button
-          onClick={() => signOut()}
+        <NotificationBell />
+
+        {/* User avatar → Profile */}
+        <Link
+          href="/dashboard/profile"
           className="flex h-10 w-10 items-center justify-center rounded-full border border-ash-stroke bg-carbon-lift text-xs font-bold text-bone hover:bg-bone hover:text-ink-black transition-colors"
-          title="Keluar"
+          title="Profile"
         >
           {initials}
-        </button>
+        </Link>
       </div>
     </header>
   )

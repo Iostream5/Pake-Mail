@@ -14,6 +14,7 @@ const navItems = [
   { href: "/dashboard/templates", label: "Template", icon: "style" },
   { href: "/dashboard/recipients", label: "Recipients", icon: "group" },
   { href: "/dashboard/batches", label: "Batches", icon: "layers" },
+  { href: "/dashboard/replies", label: "Replies", icon: "forward_to_inbox" },
   { href: "/dashboard/email-accounts", label: "Email Accounts", icon: "mail" },
 ]
 

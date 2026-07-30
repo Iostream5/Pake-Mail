@@ -7,7 +7,7 @@ export async function GET(request: Request) {
 
     const profile = await prisma.profile.findUnique({
       where: { userId },
-      include: { educations: true, experiences: true },
+      include: { educations: true, experiences: true, links: { orderBy: { order: "asc" } } },
     })
 
     return apiSuccess(profile ?? {})

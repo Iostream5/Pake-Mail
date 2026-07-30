@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { requireUserId, handleApi, apiSuccess, apiError } from "@/lib/api-helpers"
+import { getBulkTemplateStats } from "@/lib/template-stats"
 
 export async function GET(request: Request) {
   return handleApi(async () => {
@@ -10,7 +11,14 @@ export async function GET(request: Request) {
       orderBy: [{ isFavorite: "desc" }, { createdAt: "desc" }],
     })
 
-    return apiSuccess(templates)
+    const statsMap = await getBulkTemplateStats(templates.map((t) => t.id))
+
+    const enriched = templates.map((t) => {
+      const stats = statsMap.get(t.id) ?? { sentCount: 0, replyCount: 0, replyRate: null }
+      return { ...t, ...stats }
+    })
+
+    return apiSuccess(enriched)
   })
 }
 

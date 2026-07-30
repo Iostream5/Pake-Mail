@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { Dialog } from "@/components/ui/dialog"
 
 interface BatchDetailData {
   id: string
@@ -67,16 +69,33 @@ const RECIPIENT_STATUS_COLORS: Record<string, string> = {
 
 const MANUAL_STATUSES = ["APPLIED", "REPLY", "INTERVIEW", "TECHNICAL_TEST", "HR_INTERVIEW", "OFFERING", "ACCEPTED", "REJECTED"]
 
+function parseErrorLog(raw: string): { friendly: string; raw: string } {
+  try {
+    const parsed = JSON.parse(raw)
+    return { friendly: parsed.friendly || parsed.message || raw, raw: parsed.raw || raw }
+  } catch {
+    return { friendly: raw, raw }
+  }
+}
+
 export function BatchDetail({ batchId }: { batchId: string }) {
+  const router = useRouter()
   const [batch, setBatch] = useState<BatchDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [expandedErrors, setExpandedErrors] = useState<Set<string>>(new Set())
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const isActiveRef = useRef(false)
 
-  const fetchBatch = useCallback(async () => {
+  const fetchBatch = useCallback(async (isBackground = false) => {
     try {
-      setLoading(true)
+      if (isBackground) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
       setError("")
       const res = await fetch(`/api/batches/${batchId}`)
       if (!res.ok) throw new Error("Failed to fetch")
@@ -86,6 +105,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
       setError("Failed to load batch details")
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [batchId])
 
@@ -100,8 +120,8 @@ export function BatchDetail({ batchId }: { batchId: string }) {
     }
     isActiveRef.current = true
     const interval = setInterval(() => {
-      if (isActiveRef.current) fetchBatch()
-    }, 10000)
+      if (isActiveRef.current) fetchBatch(true)
+    }, 15000)
     return () => clearInterval(interval)
   }, [batch, fetchBatch])
 
@@ -118,7 +138,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
         const err = await res.json()
         throw new Error(err.error || `Failed to ${action}`)
       }
-      await fetchBatch()
+      await fetchBatch(false)
     } catch (e) {
       setError(e instanceof Error ? e.message : `Failed to ${action}`)
     } finally {
@@ -141,7 +161,57 @@ export function BatchDetail({ batchId }: { batchId: string }) {
     }
   }
 
-  if (loading) return <div className="text-sm text-zinc-500">Loading...</div>
+  const handleDelete = async () => {
+    setActionLoading("delete")
+    setError("")
+    try {
+      const res = await fetch(`/api/batches?id=${batchId}`, { method: "DELETE" })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to delete")
+      }
+      router.push("/dashboard/batches")
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to delete batch")
+    } finally {
+      setActionLoading(null)
+      setShowDeleteConfirm(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-start justify-between">
+          <div className="space-y-3 flex-1">
+            <div className="flex items-center gap-3">
+              <div className="h-7 w-48 animate-pulse rounded bg-zinc-200" />
+              <div className="h-5 w-20 animate-pulse rounded bg-zinc-200" />
+            </div>
+            <div className="h-4 w-64 animate-pulse rounded bg-zinc-100" />
+            <div className="h-3 w-96 animate-pulse rounded bg-zinc-100" />
+          </div>
+          <div className="h-8 w-16 animate-pulse rounded-lg bg-zinc-200" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="rounded-lg border border-zinc-200 p-4">
+              <div className="mx-auto h-7 w-12 animate-pulse rounded-full bg-zinc-200" />
+              <div className="mx-auto mt-2 h-3 w-10 animate-pulse rounded bg-zinc-100" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-lg border border-zinc-200 p-4">
+          <div className="mb-3 h-4 w-24 animate-pulse rounded bg-zinc-200" />
+          <div className="space-y-2">
+            <div className="h-8 animate-pulse rounded bg-zinc-100" />
+            <div className="h-8 animate-pulse rounded bg-zinc-100" />
+            <div className="h-8 animate-pulse rounded bg-zinc-100" />
+          </div>
+        </div>
+      </div>
+    )
+  }
   if (!batch) return <div className="text-sm text-red-600">{error || "Batch not found"}</div>
 
   const isActive = ["RUNNING", "PAUSED", "SCHEDULED"].includes(batch.status)
@@ -155,6 +225,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-semibold">{batch.name}</h2>
+            {refreshing && <span className="text-xs text-zinc-400 animate-pulse">Sedang Mengupdate data...</span>}
             <span className={cn("rounded px-2 py-0.5 text-xs font-semibold", STATUS_COLORS[batch.status] || "bg-zinc-100 text-zinc-700")}>
               {batch.status}
             </span>
@@ -175,7 +246,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
           </div>
         </div>
 
-        {(isDraft || isActive) && (
+        {(isDraft || isActive || ["DRAFT", "STOPPED", "FAILED", "COMPLETED"].includes(batch.status)) && (
           <div className="flex flex-wrap items-center gap-2">
             {isDraft && (
               <button
@@ -211,6 +282,15 @@ export function BatchDetail({ batchId }: { batchId: string }) {
                 className="inline-flex h-8 items-center justify-center rounded-lg border border-red-300 px-3 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
               >
                 {actionLoading === "stop" ? "..." : "Stop"}
+              </button>
+            )}
+            {["DRAFT", "STOPPED", "FAILED", "COMPLETED"].includes(batch.status) && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={actionLoading === "delete"}
+                className="inline-flex h-8 items-center justify-center rounded-lg border border-red-300 px-3 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+              >
+                {actionLoading === "delete" ? "..." : "Delete"}
               </button>
             )}
           </div>
@@ -270,12 +350,40 @@ export function BatchDetail({ batchId }: { batchId: string }) {
                   <td className="px-4 py-3 text-sm font-medium">{br.recipient.companyName}</td>
                   <td className="px-4 py-3 text-sm text-zinc-600">{br.recipient.hrEmail}</td>
                   <td className="px-4 py-3 text-sm text-zinc-600">{br.recipient.position || "-"}</td>
-                  <td className="px-4 py-3">
-                    <span className={cn("text-xs font-medium", RECIPIENT_STATUS_COLORS[br.status] || "text-zinc-500")}>
-                      {br.status}
-                    </span>
-                    {br.errorLog && <p className="text-[10px] text-red-500 truncate max-w-40" title={br.errorLog}>{br.errorLog}</p>}
-                  </td>
+                    <td className="px-4 py-3">
+                      <span className={cn("text-xs font-medium", RECIPIENT_STATUS_COLORS[br.status] || "text-zinc-500")}>
+                        {br.status}
+                      </span>
+                      {br.errorLog && (() => {
+                        const { friendly, raw } = parseErrorLog(br.errorLog!)
+                        const isExpanded = expandedErrors.has(br.id)
+                        return (
+                          <div className="text-[10px]">
+                            <div className="flex items-center gap-1">
+                              <span className="text-red-500 truncate max-w-32">{friendly}</span>
+                              {raw !== friendly && (
+                                <button
+                                  onClick={() => {
+                                    setExpandedErrors((prev) => {
+                                      const next = new Set(prev)
+                                      if (isExpanded) next.delete(br.id)
+                                      else next.add(br.id)
+                                      return next
+                                    })
+                                  }}
+                                  className="text-zinc-400 hover:text-zinc-600 underline shrink-0"
+                                >
+                                  {isExpanded ? "Sembunyikan" : "Detail teknis"}
+                                </button>
+                              )}
+                            </div>
+                            {isExpanded && (
+                              <pre className="mt-1 whitespace-pre-wrap text-zinc-400 bg-zinc-50 p-1 rounded max-w-64 overflow-x-auto">{raw}</pre>
+                            )}
+                          </div>
+                        )
+                      })()}
+                    </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
                     {br.sentAt ? new Date(br.sentAt).toLocaleString() : "-"}
                   </td>
@@ -316,9 +424,33 @@ export function BatchDetail({ batchId }: { batchId: string }) {
                 {br.recipient.position && <span>Posisi: {br.recipient.position}</span>}
                 <span>Sent: {br.sentAt ? new Date(br.sentAt).toLocaleString() : "-"}</span>
               </div>
-              {br.errorLog && (
-                <p className="mt-1 text-[10px] text-red-500" title={br.errorLog}>{br.errorLog}</p>
-              )}
+              {br.errorLog && (() => {
+                const { friendly, raw } = parseErrorLog(br.errorLog!)
+                const isExpanded = expandedErrors.has(br.id)
+                return (
+                  <div className="mt-1 text-[10px]">
+                    <span className="text-red-500">{friendly}</span>
+                    {raw !== friendly && (
+                      <button
+                        onClick={() => {
+                          setExpandedErrors((prev) => {
+                            const next = new Set(prev)
+                            if (isExpanded) next.delete(br.id)
+                            else next.add(br.id)
+                            return next
+                          })
+                        }}
+                        className="ml-1 text-zinc-400 hover:text-zinc-600 underline"
+                      >
+                        {isExpanded ? "Sembunyikan" : "Detail teknis"}
+                      </button>
+                    )}
+                    {isExpanded && (
+                      <pre className="mt-1 whitespace-pre-wrap text-zinc-400 bg-zinc-50 p-1 rounded">{raw}</pre>
+                    )}
+                  </div>
+                )
+              })()}
               {["SENT", "FAILED", "SKIPPED", "RETRY"].includes(br.status) && (
                 <div className="mt-2">
                   <select
@@ -382,6 +514,29 @@ export function BatchDetail({ batchId }: { batchId: string }) {
           <p className="text-sm font-medium">{new Date(batch.createdAt).toLocaleDateString()}</p>
         </div>
       </div>
+
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        title="Delete Batch"
+        description="Are you sure you want to delete this batch? This action cannot be undone."
+      >
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            onClick={() => setShowDeleteConfirm(false)}
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-300 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={actionLoading === "delete"}
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-red-600 px-4 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {actionLoading === "delete" ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </Dialog>
     </div>
   )
 }

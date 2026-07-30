@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Icon } from "@/components/ui/icon"
 
 interface Education {
   id: string
@@ -25,17 +25,23 @@ interface Experience {
   description: string | null
 }
 
+interface ProfileLink {
+  id: string
+  name: string
+  url: string
+  order: number
+}
+
 interface Profile {
   id?: string
   fullName?: string
   phone?: string | null
   email?: string | null
-  linkedinUrl?: string | null
-  portfolioUrl?: string | null
   address?: string | null
   birthDate?: string | null
   educations?: Education[]
   experiences?: Experience[]
+  links?: ProfileLink[]
 }
 
 function emptyProfile(): Profile {
@@ -43,12 +49,11 @@ function emptyProfile(): Profile {
     fullName: "",
     phone: null,
     email: null,
-    linkedinUrl: null,
-    portfolioUrl: null,
     address: null,
     birthDate: null,
     educations: [],
     experiences: [],
+    links: [],
   }
 }
 
@@ -94,9 +99,9 @@ export function ProfileForm() {
           fullName: profile.fullName,
           phone: profile.phone,
           email: profile.email,
+          address: profile.address,
           linkedinUrl: profile.linkedinUrl,
           portfolioUrl: profile.portfolioUrl,
-          address: profile.address,
         }),
       })
       if (!res.ok) throw new Error("Failed to save")
@@ -157,6 +162,72 @@ export function ProfileForm() {
       await fetchProfile()
     } catch {
       setError("Gagal menghapus pendidikan")
+    }
+  }
+
+  // Profile Link CRUD
+  const MAX_LINKS = 10
+  const MAX_EDUCATION = 5
+  const MAX_EXPERIENCE = 10
+
+  const [newLink, setNewLink] = useState<{ name: string; url: string }>({ name: "", url: "" })
+  const [savingLink, setSavingLink] = useState(false)
+
+  const handleAddLink = async () => {
+    if (!newLink.name || !newLink.url) return
+    try {
+      setSavingLink(true)
+      setError("")
+      const res = await fetch("/api/profile/links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newLink),
+      })
+      if (!res.ok) throw new Error("Failed to add link")
+      setNewLink({ name: "", url: "" })
+      await fetchProfile()
+    } catch {
+      setError("Gagal menambah link")
+    } finally {
+      setSavingLink(false)
+    }
+  }
+
+  const handleDeleteLink = async (id: string) => {
+    try {
+      setError("")
+      const res = await fetch(`/api/profile/links?id=${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed to delete link")
+      await fetchProfile()
+    } catch {
+      setError("Gagal menghapus link")
+    }
+  }
+
+  const handleDeleteLegacyLink = async (field: "linkedinUrl" | "portfolioUrl") => {
+    try {
+      setSaving(true)
+      setError("")
+      setSuccess("")
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: profile.fullName,
+          phone: profile.phone,
+          email: profile.email,
+          address: profile.address,
+          linkedinUrl: field === "linkedinUrl" ? null : profile.linkedinUrl,
+          portfolioUrl: field === "portfolioUrl" ? null : profile.portfolioUrl,
+        }),
+      })
+      if (!res.ok) throw new Error("Failed to delete")
+      setSuccess("Link berhasil dihapus")
+      await fetchProfile()
+    } catch {
+      setError("Gagal menghapus link")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -270,24 +341,103 @@ export function ProfileForm() {
               onChange={handleChange}
             />
             <Input
-              label="LinkedIn URL"
-              name="linkedinUrl"
-              value={profile.linkedinUrl || ""}
-              onChange={handleChange}
-            />
-            <Input
-              label="Portfolio URL"
-              name="portfolioUrl"
-              value={profile.portfolioUrl || ""}
-              onChange={handleChange}
-            />
-            <Input
               label="Alamat"
               name="address"
               value={profile.address || ""}
               onChange={handleChange}
             />
           </div>
+
+          {/* Dynamic Links */}
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">Link / URL</p>
+            </div>
+
+            <div className="space-y-2">
+              {/* Legacy linkedinUrl */}
+              {profile.linkedinUrl && (
+                <div className="flex items-center gap-3 rounded-lg border border-ash-stroke bg-carbon-lift p-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-warm-granite font-mono uppercase tracking-wider">LinkedIn</p>
+                    <p className="text-sm text-bone truncate">{profile.linkedinUrl}</p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteLegacyLink("linkedinUrl")}
+                    className="shrink-0 text-warm-granite hover:text-red-400 transition-colors"
+                  >
+                    <Icon name="delete" size="sm" />
+                  </button>
+                </div>
+              )}
+              {/* Legacy portfolioUrl */}
+              {profile.portfolioUrl && (
+                <div className="flex items-center gap-3 rounded-lg border border-ash-stroke bg-carbon-lift p-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-warm-granite font-mono uppercase tracking-wider">Portfolio</p>
+                    <p className="text-sm text-bone truncate">{profile.portfolioUrl}</p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteLegacyLink("portfolioUrl")}
+                    className="shrink-0 text-warm-granite hover:text-red-400 transition-colors"
+                  >
+                    <Icon name="delete" size="sm" />
+                  </button>
+                </div>
+              )}
+              {/* Dynamic links */}
+              {(profile.links ?? []).map((link) => (
+                <div
+                  key={link.id}
+                  className="flex items-center gap-3 rounded-lg border border-ash-stroke bg-carbon-lift p-3"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-warm-granite font-mono uppercase tracking-wider">{link.name}</p>
+                    <p className="text-sm text-bone truncate">{link.url}</p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteLink(link.id)}
+                    className="shrink-0 text-warm-granite hover:text-red-400 transition-colors"
+                  >
+                    <Icon name="delete" size="sm" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {(profile.links ?? []).length >= MAX_LINKS ? (
+              <p className="text-xs text-warm-granite">Maksimal {MAX_LINKS} link.</p>
+            ) : (
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Input
+                    label="Nama Link"
+                    placeholder="LinkedIn, Portfolio, dll"
+                    value={newLink.name}
+                    onChange={(e) => setNewLink((p) => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Input
+                    label="URL"
+                    placeholder="https://"
+                    value={newLink.url}
+                    onChange={(e) => setNewLink((p) => ({ ...p, url: e.target.value }))}
+                  />
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleAddLink}
+                  loading={savingLink}
+                  disabled={!newLink.name || !newLink.url}
+                >
+                  <Icon name="add" size="sm" />
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="mt-6">
             <Button onClick={handleSave} loading={saving}>
               Simpan Profil
@@ -301,16 +451,20 @@ export function ProfileForm() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Pendidikan</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setEditingEdu({})
-                setShowEduForm(true)
-              }}
-            >
-              Tambah Pendidikan
-            </Button>
+            {(profile.educations ?? []).length >= MAX_EDUCATION ? (
+              <span className="text-xs text-warm-granite">Maksimal {MAX_EDUCATION} data</span>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditingEdu({})
+                  setShowEduForm(true)
+                }}
+              >
+                Tambah Pendidikan
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -323,24 +477,24 @@ export function ProfileForm() {
                   onChange={(e) => setEditingEdu((p) => ({ ...p, institution: e.target.value }))}
                 />
                 <Input
-                  label="Gelar"
+                  label="Gelar (Opsional)"
                   value={editingEdu?.degree || ""}
                   onChange={(e) => setEditingEdu((p) => ({ ...p, degree: e.target.value || null }))}
                 />
                 <Input
-                  label="Jurusan"
+                  label="Jurusan (Opsional)"
                   value={editingEdu?.major || ""}
                   onChange={(e) => setEditingEdu((p) => ({ ...p, major: e.target.value || null }))}
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <Input
-                    label="Tahun Mulai"
+                    label="Tahun Mulai (Opsional)"
                     type="number"
                     value={editingEdu?.startYear ?? ""}
                     onChange={(e) => setEditingEdu((p) => ({ ...p, startYear: e.target.value ? Number(e.target.value) : null }))}
                   />
                   <Input
-                    label="Tahun Selesai"
+                    label="Tahun Selesai (Opsional)"
                     type="number"
                     value={editingEdu?.endYear ?? ""}
                     onChange={(e) => setEditingEdu((p) => ({ ...p, endYear: e.target.value ? Number(e.target.value) : null }))}
@@ -412,16 +566,20 @@ export function ProfileForm() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Pengalaman Kerja</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setEditingExp({})
-                setShowExpForm(true)
-              }}
-            >
-              Tambah Pengalaman
-            </Button>
+            {(profile.experiences ?? []).length >= MAX_EXPERIENCE ? (
+              <span className="text-xs text-warm-granite">Maksimal {MAX_EXPERIENCE} data</span>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditingExp({})
+                  setShowExpForm(true)
+                }}
+              >
+                Tambah Pengalaman
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -439,20 +597,20 @@ export function ProfileForm() {
                   onChange={(e) => setEditingExp((p) => ({ ...p, position: e.target.value }))}
                 />
                 <Input
-                  label="Tanggal Mulai"
+                  label="Tanggal Mulai (Opsional)"
                   type="date"
                   value={editingExp?.startDate?.split("T")[0] || ""}
                   onChange={(e) => setEditingExp((p) => ({ ...p, startDate: e.target.value || null }))}
                 />
                 <Input
-                  label="Tanggal Selesai"
+                  label="Tanggal Selesai (Opsional)"
                   type="date"
                   value={editingExp?.endDate?.split("T")[0] || ""}
                   onChange={(e) => setEditingExp((p) => ({ ...p, endDate: e.target.value || null }))}
                 />
                 <div className="col-span-full">
                   <Textarea
-                    label="Deskripsi"
+                    label="Deskripsi (Opsional)"
                     value={editingExp?.description || ""}
                     onChange={(e) => setEditingExp((p) => ({ ...p, description: e.target.value || null }))}
                     rows={3}

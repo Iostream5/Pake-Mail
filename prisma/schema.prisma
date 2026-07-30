@@ -20,10 +20,12 @@ enum EmailProvider {
 
 enum DocumentCategory {
   CV
-  PORTFOLIO
+  SURAT_LAMARAN
   IJAZAH
   SKCK
   TRANSKRIP
+  SERTIFIKAT
+  PAS_FOTO
   OTHER
 }
 
@@ -72,6 +74,8 @@ model User {
   recipients    Recipient[]
   batches       Batch[]
   activityLogs  ActivityLog[]
+  notifications Notification[]
+  documentTagMappings DocumentTagMapping[]
 }
 
 model Account {
@@ -132,6 +136,16 @@ model Profile {
 
   educations  Education[]
   experiences Experience[]
+  links       ProfileLink[]
+}
+
+model ProfileLink {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name      String
+  url       String
+  order     Int     @default(0)
 }
 
 model Education {
@@ -170,7 +184,8 @@ model Document {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
-  batchDocuments BatchDocument[]
+  batchDocuments    BatchDocument[]
+  documentTagMappings DocumentTagMapping[]
 }
 
 model EmailTemplate {
@@ -244,20 +259,38 @@ model BatchDocument {
 }
 
 model BatchRecipient {
-  id          String          @id @default(uuid())
-  batchId     String
-  batch       Batch           @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  recipientId String
-  recipient   Recipient       @relation(fields: [recipientId], references: [id])
-  status      RecipientStatus @default(PENDING)
-  sentAt      DateTime?
-  errorLog    String?
-  retryCount  Int             @default(0)
-  updatedAt   DateTime        @updatedAt
+  id              String          @id @default(uuid())
+  batchId         String
+  batch           Batch           @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  recipientId     String
+  recipient       Recipient       @relation(fields: [recipientId], references: [id])
+  status          RecipientStatus @default(PENDING)
+  sentAt          DateTime?
+  gmailThreadId   String?
+  gmailMessageId  String?
+  errorLog        String?
+  retryCount      Int             @default(0)
+  updatedAt       DateTime        @updatedAt
 
   activityLogs ActivityLog[]
+  replies      Reply[]
 
   @@unique([batchId, recipientId])
+}
+
+model Reply {
+  id                String          @id @default(uuid())
+  batchRecipientId  String
+  batchRecipient    BatchRecipient  @relation(fields: [batchRecipientId], references: [id], onDelete: Cascade)
+  gmailThreadId     String
+  snippet           String
+  receivedAt        DateTime
+  isLikelyAutomated Boolean         @default(false)
+  userLabel         String?
+  createdAt         DateTime        @default(now())
+
+  @@index([batchRecipientId])
+  @@index([gmailThreadId])
 }
 
 model ActivityLog {
@@ -271,4 +304,31 @@ model ActivityLog {
   eventType        String
   message          String
   createdAt        DateTime        @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  refId     String?
+  title     String
+  body      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+model DocumentTagMapping {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  positionTag String
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, positionTag, documentId])
+  @@index([userId, positionTag])
 }

@@ -37,6 +37,7 @@ export function RecipientList() {
   const [historyRecipient, setHistoryRecipient] = useState<Recipient | null>(null)
   const [historyData, setHistoryData] = useState<any[] | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<Recipient | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const fetchRecipients = useCallback(async (q: string) => {
@@ -92,6 +93,7 @@ export function RecipientList() {
       setError("")
       const res = await fetch(`/api/recipients?id=${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Failed to delete")
+      setDeleteConfirm(null)
       await fetchRecipients(search)
     } catch {
       setError("Gagal menghapus")
@@ -135,9 +137,19 @@ export function RecipientList() {
 
   return (
     <div className="space-y-6">
-      {/* Header and Actions */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end border-b border-ash-stroke pb-4">
-        <div className="flex items-center gap-2">
+      {/* Header with summary and actions */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b border-ash-stroke pb-4">
+        <div>
+          <h2 className="font-mono text-sm font-medium text-bone">
+            Daftar Perusahaan Tujuan
+          </h2>
+          {!loading && (
+            <p className="mt-1 text-xs font-mono text-warm-granite">
+              {recipients.length} perusahaan terdaftar
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <input
             ref={fileRef}
             type="file"
@@ -146,22 +158,25 @@ export function RecipientList() {
             onChange={handleImportCsv}
             disabled={importing}
           />
-          <Button
-            variant="ghost"
-            onClick={() => fileRef.current?.click()}
-            disabled={importing}
-          >
-            <Icon name="upload" className="mr-2 text-sm" />
-            IMPORT CSV
-          </Button>
-          <Button variant="ghost" onClick={handleExport}>
-            <Icon name="download" className="mr-2 text-sm" />
-            EXPORT CSV
-          </Button>
-          <Button variant="primary" onClick={() => setShowAdd(true)}>
-            <Icon name="add" className="mr-2 text-sm" />
-            TAMBAH MANUAL
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              onClick={() => fileRef.current?.click()}
+              disabled={importing}
+              className="text-xs"
+            >
+              <Icon name="upload" className="mr-1.5 text-sm" />
+              {importing ? "MENGIMPORT..." : "IMPORT CSV"}
+            </Button>
+            <Button variant="ghost" onClick={handleExport} className="text-xs">
+              <Icon name="download" className="mr-1.5 text-sm" />
+              EXPORT CSV
+            </Button>
+            <Button variant="primary" onClick={() => setShowAdd(true)} className="text-xs">
+              <Icon name="add" className="mr-1.5 text-sm" />
+              TAMBAH MANUAL
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -179,7 +194,7 @@ export function RecipientList() {
         <Input
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Cari nama perusahaan atau email..."
+          placeholder="Cari nama perusahaan atau email HR..."
           className="pl-10 bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone font-mono"
         />
       </div>
@@ -188,55 +203,58 @@ export function RecipientList() {
       <Dialog
         open={showAdd}
         onClose={() => { setShowAdd(false); setForm(emptyForm) }}
-        title="TAMBAH PERUSAHAAN"
-        description="Isi data perusahaan tujuan lamaran."
+        title="Tambah Perusahaan Baru"
+        description="Lengkapi data perusahaan yang akan menjadi tujuan lamaran."
       >
         <div className="space-y-4">
-          <div className="space-y-2">
-            <MonoLabel>Nama Perusahaan</MonoLabel>
-            <Input
-              value={form.companyName}
-              onChange={(e) => setForm((p) => ({ ...p, companyName: e.target.value }))}
-              placeholder="PT Maju Jaya"
-              className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
-            />
-          </div>
-          <div className="space-y-2">
-            <MonoLabel>Email HR</MonoLabel>
-            <Input
-              type="email"
-              value={form.hrEmail}
-              onChange={(e) => setForm((p) => ({ ...p, hrEmail: e.target.value }))}
-              placeholder="hr@majujaya.com"
-              className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
-            />
-          </div>
-          <div className="space-y-2">
-            <MonoLabel>Posisi yang Dilamar</MonoLabel>
-            <Input
-              value={form.position}
-              onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))}
-              placeholder="Frontend Developer"
-              className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
-            />
-          </div>
-          <div className="space-y-2">
-            <MonoLabel>Lokasi</MonoLabel>
-            <Input
-              value={form.location}
-              onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
-              placeholder="Jakarta"
-              className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <MonoLabel>Nama Perusahaan <span className="text-error">*</span></MonoLabel>
+              <Input
+                value={form.companyName}
+                onChange={(e) => setForm((p) => ({ ...p, companyName: e.target.value }))}
+                placeholder="contoh: PT Maju Jaya"
+                className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
+              />
+            </div>
+            <div className="space-y-2">
+              <MonoLabel>Email HR <span className="text-error">*</span></MonoLabel>
+              <Input
+                type="email"
+                value={form.hrEmail}
+                onChange={(e) => setForm((p) => ({ ...p, hrEmail: e.target.value }))}
+                placeholder="contoh: hr@majujaya.com"
+                className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
+              />
+            </div>
+            <div className="space-y-2">
+              <MonoLabel>Posisi yang Dilamar</MonoLabel>
+              <Input
+                value={form.position}
+                onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))}
+                placeholder="contoh: Frontend Developer"
+                className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
+              />
+            </div>
+            <div className="space-y-2">
+              <MonoLabel>Lokasi Perusahaan</MonoLabel>
+              <Input
+                value={form.location}
+                onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
+                placeholder="contoh: Jakarta"
+                className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <MonoLabel>Tags (pisahkan dengan koma)</MonoLabel>
             <Input
               value={form.tags}
               onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))}
-              placeholder="frontend, react, startup"
+              placeholder="contoh: frontend, react, startup"
               className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
             />
+            <p className="text-[11px] text-warm-granite font-mono">Gunakan tag untuk mengelompokkan perusahaan, misalnya berdasarkan teknologi atau prioritas.</p>
           </div>
           <div className="flex justify-end gap-2 pt-4 border-t border-ash-stroke">
             <Button variant="ghost" onClick={() => { setShowAdd(false); setForm(emptyForm) }}>
@@ -257,12 +275,12 @@ export function RecipientList() {
       <Dialog
         open={historyRecipient !== null}
         onClose={() => { setHistoryRecipient(null); setHistoryData(null) }}
-        title={`RIWAYAT LAMARAN`}
-        description={historyRecipient ? `${historyRecipient.companyName} (${historyRecipient.hrEmail})` : ""}
+        title="Riwayat Lamaran"
+        description={historyRecipient ? `Lamaran yang pernah dikirim ke ${historyRecipient.companyName}` : ""}
         className="max-w-2xl"
       >
         {historyLoading ? (
-          <div className="py-8 text-center text-sm font-mono text-warm-granite">MEMUAT...</div>
+          <div className="py-8 text-center text-sm font-mono text-warm-granite">Memuat riwayat...</div>
         ) : historyData && historyData.length > 0 ? (
           <div className="space-y-3">
             {historyData.map((h: any, i: number) => (
@@ -286,162 +304,217 @@ export function RecipientList() {
             ))}
           </div>
         ) : (
-          <div className="py-8 text-center text-sm font-mono text-warm-granite">
-            BELUM ADA RIWAYAT LAMARAN UNTUK PERUSAHAAN INI.
+          <div className="flex flex-col items-center py-10 text-center">
+            <Icon name="history" className="text-2xl text-graphite-mid mb-3" />
+            <p className="text-sm font-mono text-warm-granite">
+              Belum ada riwayat lamaran untuk perusahaan ini.
+            </p>
           </div>
         )}
       </Dialog>
 
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        title="Hapus Perusahaan"
+        description={`Apakah Anda yakin ingin menghapus ${deleteConfirm?.companyName}? Data yang sudah dihapus tidak dapat dikembalikan.`}
+      >
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>
+            BATAL
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => deleteConfirm && handleDelete(deleteConfirm.id)}
+            className="bg-error text-white hover:bg-error/80"
+          >
+            HAPUS
+          </Button>
+        </div>
+      </Dialog>
+
+      {/* Empty State */}
+      {!loading && recipients.length === 0 && !search && (
+        <div className="flex flex-col items-center rounded border border-dashed border-ash-stroke bg-carbon-lift py-14 px-6 text-center">
+          <Icon name="business" className="text-3xl text-graphite-mid mb-4" />
+          <h3 className="font-mono text-sm font-medium text-bone mb-1">Belum Ada Data Perusahaan</h3>
+          <p className="text-xs font-mono text-warm-granite max-w-sm">
+            Tambah perusahaan tujuan lamaran secara manual atau import dari file CSV untuk memulai.
+          </p>
+          <div className="flex flex-wrap items-center gap-3 mt-6">
+            <Button variant="primary" onClick={() => setShowAdd(true)} className="text-xs">
+              <Icon name="add" className="mr-1.5 text-sm" />
+              TAMBAH MANUAL
+            </Button>
+            <span className="text-xs text-warm-granite font-mono">atau</span>
+            <Button
+              variant="ghost"
+              onClick={() => fileRef.current?.click()}
+              disabled={importing}
+              className="text-xs"
+            >
+              <Icon name="upload" className="mr-1.5 text-sm" />
+              IMPORT CSV
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Table - Desktop */}
-      <div className="hidden rounded border border-ash-stroke bg-carbon-lift sm:block">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b border-ash-stroke hover:bg-transparent">
-              <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Perusahaan</TableHead>
-              <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Email HR</TableHead>
-              <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Posisi</TableHead>
-              <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Lokasi</TableHead>
-              <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Tags</TableHead>
-              <TableHead className="w-20" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && recipients.length === 0 ? (
-              <TableRow className="border-b-0 hover:bg-transparent">
-                <TableCell colSpan={6} className="py-12 text-center">
-                  <span className="font-mono text-warm-granite text-sm uppercase tracking-widest">MEMUAT DATA...</span>
-                </TableCell>
+      {!(loading && recipients.length === 0) && !(!loading && recipients.length === 0 && !search) && (
+        <div className="hidden rounded border border-ash-stroke bg-carbon-lift sm:block">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-ash-stroke hover:bg-transparent">
+                <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Perusahaan</TableHead>
+                <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Email HR</TableHead>
+                <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Posisi</TableHead>
+                <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Lokasi</TableHead>
+                <TableHead className="font-mono text-warm-granite text-xs uppercase tracking-wider">Tags</TableHead>
+                <TableHead className="w-20" />
               </TableRow>
-            ) : recipients.length === 0 ? (
-              <TableRow className="border-b-0 hover:bg-transparent">
-                <TableCell colSpan={6} className="py-12 text-center">
-                  <span className="font-mono text-warm-granite text-sm">
-                    {search
-                      ? "TIDAK ADA HASIL PENCARIAN."
-                      : "BELUM ADA DATA. TAMBAH MANUAL ATAU IMPORT CSV."}
-                  </span>
-                </TableCell>
-              </TableRow>
-            ) : (
-              recipients.map((r) => (
-                <TableRow key={r.id} className="border-b border-ash-stroke hover:bg-obsidian-canvas/50 transition-colors">
-                  <TableCell className="font-medium text-bone font-mono text-sm">{r.companyName}</TableCell>
-                  <TableCell className="text-warm-granite font-mono text-sm">{r.hrEmail}</TableCell>
-                  <TableCell className="text-warm-granite text-sm">{r.position || "-"}</TableCell>
-                  <TableCell className="text-warm-granite text-sm">{r.location || "-"}</TableCell>
-                  <TableCell>
-                    {r.tags ? (
-                      <div className="flex flex-wrap gap-1">
-                        {r.tags.split(",").map((tag) => (
-                          <Badge key={tag} variant="bone">
-                            {tag.trim()}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-graphite-mid">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          setHistoryRecipient(r)
-                          setHistoryLoading(true)
-                          setHistoryData(null)
-                          fetch(`/api/recipients/history?recipientId=${r.id}`)
-                            .then((res) => res.json())
-                            .then((data) => setHistoryData(data.data?.history ?? []))
-                            .catch(() => setHistoryData([]))
-                            .finally(() => setHistoryLoading(false))
-                        }}
-                        className="h-8 px-2 text-warm-granite hover:text-bone"
-                        title="Riwayat lamaran"
-                      >
-                        <Icon name="history" className="text-sm" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleDelete(r.id)}
-                        className="h-8 px-2 text-error hover:text-error hover:bg-error-container"
-                      >
-                        <Icon name="delete" className="text-sm" />
-                      </Button>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {loading && recipients.length === 0 ? (
+                <TableRow className="border-b-0 hover:bg-transparent">
+                  <TableCell colSpan={6} className="py-12 text-center">
+                    <span className="font-mono text-warm-granite text-sm uppercase tracking-widest">MEMUAT DATA...</span>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : recipients.length === 0 ? (
+                <TableRow className="border-b-0 hover:bg-transparent">
+                  <TableCell colSpan={6} className="py-12 text-center">
+                    <span className="font-mono text-warm-granite text-sm">
+                      {search
+                        ? "Tidak ada hasil untuk pencarian ini."
+                        : "Belum ada data perusahaan."}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                recipients.map((r) => (
+                  <TableRow key={r.id} className="border-b border-ash-stroke hover:bg-obsidian-canvas/50 transition-colors">
+                    <TableCell className="font-medium text-bone font-mono text-sm">{r.companyName}</TableCell>
+                    <TableCell className="text-warm-granite font-mono text-sm">{r.hrEmail}</TableCell>
+                    <TableCell className="text-warm-granite text-sm">{r.position || "-"}</TableCell>
+                    <TableCell className="text-warm-granite text-sm">{r.location || "-"}</TableCell>
+                    <TableCell>
+                      {r.tags ? (
+                        <div className="flex flex-wrap gap-1">
+                          {r.tags.split(",").map((tag) => (
+                            <Badge key={tag} variant="bone">
+                              {tag.trim()}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-graphite-mid">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setHistoryRecipient(r)
+                            setHistoryLoading(true)
+                            setHistoryData(null)
+                            fetch(`/api/recipients/history?recipientId=${r.id}`)
+                              .then((res) => res.json())
+                              .then((data) => setHistoryData(data.data?.history ?? []))
+                              .catch(() => setHistoryData([]))
+                              .finally(() => setHistoryLoading(false))
+                          }}
+                          className="h-8 px-2 text-warm-granite hover:text-bone"
+                          title="Lihat riwayat lamaran"
+                        >
+                          <Icon name="history" className="text-sm" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setDeleteConfirm(r)}
+                          className="h-8 px-2 text-error hover:text-error hover:bg-error-container"
+                        >
+                          <Icon name="delete" className="text-sm" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Cards - Mobile */}
-      <div className="space-y-3 sm:hidden">
-        {loading && recipients.length === 0 ? (
-          <div className="py-8 text-center text-sm font-mono text-warm-granite uppercase tracking-widest">MEMUAT DATA...</div>
-        ) : recipients.length === 0 ? (
-          <div className="rounded border border-dashed border-ash-stroke p-8 text-center text-sm font-mono text-warm-granite">
-            {search
-              ? "TIDAK ADA HASIL PENCARIAN."
-              : "BELUM ADA DATA. TAMBAH MANUAL ATAU IMPORT CSV."}
-          </div>
-        ) : (
-          recipients.map((r) => (
-            <div
-              key={r.id}
-              className="rounded border border-ash-stroke bg-carbon-lift p-4"
-            >
-              <div className="flex items-start justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-mono text-bone font-medium">{r.companyName}</p>
-                  <p className="mt-1 text-xs font-mono text-warm-granite">{r.hrEmail}</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    className="shrink-0 h-8 px-2 text-warm-granite hover:text-bone"
-                    onClick={() => {
-                      setHistoryRecipient(r)
-                      setHistoryLoading(true)
-                      setHistoryData(null)
-                      fetch(`/api/recipients/history?recipientId=${r.id}`)
-                        .then((res) => res.json())
-                        .then((data) => setHistoryData(data.data?.history ?? []))
-                        .catch(() => setHistoryData([]))
-                        .finally(() => setHistoryLoading(false))
-                    }}
-                    title="Riwayat lamaran"
-                  >
-                    <Icon name="history" className="text-sm" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="shrink-0 h-8 px-2 text-error hover:text-error hover:bg-error-container"
-                    onClick={() => handleDelete(r.id)}
-                  >
-                    <Icon name="delete" className="text-sm" />
-                  </Button>
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-warm-granite font-mono">
-                {r.position && <span>POS: {r.position}</span>}
-                {r.location && <span>LOC: {r.location}</span>}
-              </div>
-              {r.tags && (
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {r.tags.split(",").map((tag) => (
-                    <Badge key={tag} variant="bone">
-                      {tag.trim()}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+      {!(loading && recipients.length === 0) && !(!loading && recipients.length === 0 && !search) && (
+        <div className="space-y-3 sm:hidden">
+          {loading && recipients.length === 0 ? (
+            <div className="py-8 text-center text-sm font-mono text-warm-granite uppercase tracking-widest">MEMUAT DATA...</div>
+          ) : recipients.length === 0 ? (
+            <div className="rounded border border-dashed border-ash-stroke p-8 text-center text-sm font-mono text-warm-granite">
+              {search
+                ? "Tidak ada hasil untuk pencarian ini."
+                : "Belum ada data perusahaan."}
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            recipients.map((r) => (
+              <div
+                key={r.id}
+                className="rounded border border-ash-stroke bg-carbon-lift p-4"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-mono text-bone font-medium">{r.companyName}</p>
+                    <p className="mt-1 text-xs font-mono text-warm-granite">{r.hrEmail}</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      className="shrink-0 h-8 px-2 text-warm-granite hover:text-bone"
+                      onClick={() => {
+                        setHistoryRecipient(r)
+                        setHistoryLoading(true)
+                        setHistoryData(null)
+                        fetch(`/api/recipients/history?recipientId=${r.id}`)
+                          .then((res) => res.json())
+                          .then((data) => setHistoryData(data.data?.history ?? []))
+                          .catch(() => setHistoryData([]))
+                          .finally(() => setHistoryLoading(false))
+                      }}
+                      title="Lihat riwayat lamaran"
+                    >
+                      <Icon name="history" className="text-sm" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="shrink-0 h-8 px-2 text-error hover:text-error hover:bg-error-container"
+                      onClick={() => setDeleteConfirm(r)}
+                    >
+                      <Icon name="delete" className="text-sm" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-warm-granite font-mono">
+                  {r.position && <span>Posisi: {r.position}</span>}
+                  {r.location && <span>Lokasi: {r.location}</span>}
+                </div>
+                {r.tags && (
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {r.tags.split(",").map((tag) => (
+                      <Badge key={tag} variant="bone">
+                        {tag.trim()}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   )
 }
