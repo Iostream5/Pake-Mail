@@ -334,11 +334,13 @@ export default function Home() {
       <header className="fixed top-0 left-0 w-full z-50 bg-obsidian-canvas/80 backdrop-blur-md border-b border-ash-stroke">
         <nav className="flex justify-between items-center w-full px-4 md:px-10 py-3 max-w-[1200px] mx-auto">
           <div className="flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="Pake Mail"
+              className="h-7 w-7 md:h-9 md:w-9 flex-shrink-0 object-contain"
+            />
             <span className="text-xl md:text-2xl font-[family-name:var(--font-geist-sans)] font-black text-bone uppercase tracking-tighter">
               Pake Mail
-            </span>
-            <span className="font-[family-name:var(--font-geist-mono)] text-[10px] bg-signal-orange text-white px-1.5 py-0.5 rounded-sm tracking-widest">
-              V1.0 MVP
             </span>
           </div>
 

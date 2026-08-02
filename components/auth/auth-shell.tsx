@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Icon } from "@/components/ui/icon"
 import { MonoLabel } from "@/components/ui/mono-label"
 import { DocModal, type DocContent } from "@/components/landing/doc-modal"
 import { FOOTER_DOCS } from "@/components/landing/docs-content"
@@ -57,10 +56,12 @@ export function AuthShell({ children, mode }: AuthShellProps) {
 
       {/* ─── Brand Header ─── */}
       <header className="relative z-10 flex flex-col items-center px-6 pb-8 pt-14 text-center md:pt-16">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-md border border-ash-stroke bg-carbon-lift text-signal-orange">
-            <Icon name="mail" />
-          </span>
+<Link href="/" className="flex items-center gap-3">
+          <img
+            src="/logo.png"
+            alt="Pake Mail"
+            className="h-11 w-12 flex-shrink-0 object-contain"
+          />
           <span className="font-[family-name:var(--font-geist-sans)] text-3xl font-black uppercase tracking-tighter text-bone md:text-4xl">
             Pake Mail
           </span>
