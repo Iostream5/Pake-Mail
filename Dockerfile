@@ -1,46 +1,33 @@
 # syntax=docker/dockerfile:1
 
-# ─────────────── STAGE 1: deps ───────────────
+# ─────────────── STAGE 1: base ───────────────
 FROM node:20-alpine AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
-
-# deps
-FROM base AS deps
 RUN apk add --no-cache libc6-compat openssl
+
+# ─────────────── STAGE 2: deps ───────────────
+FROM base AS deps
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-# ─────────────── STAGE 2: build ───────────────
-FROM base AS builder
+# ─────────────── STAGE 3: build ───────────────
+# Worker is pure TS run by tsx (the `@/*` alias comes from tsconfig.json).
+# No `next build` needed — only Prisma client generation.
+FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npx prisma generate && npm run build
+RUN npx prisma generate
 
-# ─────────────── STAGE 3: runner ───────────────
+# ─────────────── STAGE 4: runner (worker only) ───────────────
 FROM base AS runner
 ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
-RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 nextjs
-
-# Web: Next.js standalone server
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-# Worker: full runtime (tsx + source + lib) needed by BullMQ workers
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/workers ./workers
-COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
-COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/proxy.ts ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/workers ./workers
+COPY --from=build /app/lib ./lib
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/tsconfig.json ./
+COPY --from=build /app/package.json ./
 COPY docker-entrypoint.sh ./
-
-USER nextjs
-EXPOSE 3000
 
 CMD ["sh", "docker-entrypoint.sh"]
