@@ -64,17 +64,29 @@ Smart Attachment + Peringatan Re-apply + Bounce Visibility
 
 ### 4.1 Replies Module
 
-**Tujuan:** Mengambil balasan email secara otomatis dan memperbarui status lamaran tanpa user harus buka Gmail.
+**Tujuan:** Mengambil balasan email secara otomatis dan memperbarui status lamaran tanpa user harus buka Gmail — termasuk kasus balasan yang tidak dikirim lewat tombol Reply (thread terpisah).
 
-**Requirements:**
-- FR2-1.1: Sistem melakukan polling/webhook ke Gmail API (scope `gmail.readonly` yang sudah didapat sejak V1) untuk mendeteksi balasan baru pada thread pengiriman lamaran.
-- FR2-1.2: Setiap balasan yang terdeteksi otomatis mengubah status `BatchRecipient` dari `Sent`/`Applied` menjadi `Reply`.
-- FR2-1.3: User dapat melihat daftar balasan terbaru (subject, cuplikan singkat, waktu, nama perusahaan terkait) di satu halaman terpusat.
-- FR2-1.4: User dapat membuka balasan langsung di Gmail (deep link ke thread) tanpa perlu Pake Mail merender isi email penuh.
-- FR2-1.5: User dapat memberi label manual pada balasan (mis. "Perlu jadwal ulang", "Auto-reply", "Bukan relevan") untuk membantu penyaringan visual.
-- FR2-1.6: Sistem membedakan balasan otomatis (auto-reply "email diterima") dari balasan manusia sungguhan menggunakan heuristik dasar (mis. keyword umum, pengirim `no-reply@`) — ditandai berbeda, bukan disembunyikan (agar tidak ada balasan yang terlewat karena false negative).
+**Latar belakang keputusan:** Deteksi berbasis thread saja (reply asli) tidak menangkap kasus HRD yang membalas lewat email baru (subject berbeda, tanpa header threading), atau dari alamat lain di perusahaan yang sama. Karena itu, deteksi dirancang berlapis dengan **4 tingkat keyakinan (confidence tier)**, bukan biner terdeteksi/tidak.
 
-**Non-goals V2:** AI summary isi balasan, auto-reply balik dari sistem.
+**Requirements — Deteksi Berlapis:**
+- FR2-1.1: Sistem melakukan polling/webhook ke Gmail API (scope `gmail.readonly` yang sudah didapat sejak V1) untuk mendeteksi balasan baru, menggunakan 4 metode berikut secara berurutan prioritas:
+
+| Tier | Metode | Kriteria | Auto-update status `BatchRecipient` |
+|---|---|---|---|
+| **Confirmed** | Thread matching | Email baru masuk pada thread Gmail yang sama dengan email lamaran (`In-Reply-To`/`References` header) | Ya, otomatis ke `Reply` |
+| **Likely** | Sender exact match | Alamat pengirim persis sama dengan `hrEmail` yang tersimpan di Recipient, walau di luar thread | Ya, otomatis ke `Reply` |
+| **Possible** | Domain match | Domain email pengirim sama dengan domain `hrEmail`/`website` yang tersimpan, tapi alamat persisnya berbeda (orang lain di perusahaan yang sama) | Tidak — masuk daftar "Perlu Ditinjau" |
+| **Indikasi** | Company name match | Nama perusahaan (`company_name`) disebut di display name pengirim atau body email, **DAN** diterima dalam rentang waktu wajar sejak lamaran dikirim (kandidat: maksimal 90 hari), **DAN** pengirim tidak cocok dengan exclude list (`noreply@`, `no-reply@`, domain media/berita umum, dsb) | Tidak — masuk daftar "Perlu Ditinjau", ditandai sebagai sinyal paling lemah |
+
+- FR2-1.2: Hanya tier **Confirmed** dan **Likely** yang mengubah status `BatchRecipient` secara otomatis menjadi `Reply`. Tier **Possible** dan **Indikasi** tidak mengubah status otomatis — masuk ke daftar tinjauan manual agar tidak ada perubahan status yang salah tanpa sepengetahuan user.
+- FR2-1.3: Halaman Replies terpusat dibagi menjadi dua bagian: **"Balasan"** (hasil tier Confirmed + Likely) dan **"Perlu Ditinjau"** (hasil tier Possible + Indikasi), masing-masing menampilkan subject, cuplikan singkat, waktu, nama perusahaan terkait, dan badge tier-nya.
+- FR2-1.4: Dari daftar "Perlu Ditinjau", user dapat mengonfirmasi manual ("ini balasan yang benar") — aksi ini yang baru mengubah status `BatchRecipient` menjadi `Reply` — atau mengabaikannya (dismiss, tidak mengubah apa pun).
+- FR2-1.5: User dapat membuka balasan langsung di Gmail (deep link ke thread/email) tanpa perlu Pake Mail merender isi email penuh.
+- FR2-1.6: User dapat memberi label manual pada balasan (mis. "Perlu jadwal ulang", "Auto-reply", "Bukan relevan") untuk membantu penyaringan visual, berlaku untuk semua tier.
+- FR2-1.7: Sistem membedakan balasan otomatis (auto-reply "email diterima") dari balasan manusia sungguhan menggunakan heuristik dasar (mis. keyword umum, pengirim `no-reply@`) — ditandai berbeda, bukan disembunyikan (agar tidak ada balasan yang terlewat karena false negative). Heuristik ini berlaku lintas tier, termasuk hasil tier Confirmed.
+- FR2-1.8: Exclude list untuk tier Indikasi (FR2-1.1) dapat diperluas dari waktu ke waktu berdasarkan pola noise yang ditemukan pasca-rilis — tidak perlu sempurna sejak awal, tapi harus mudah diperbarui tanpa deploy ulang aplikasi (mis. dikonfigurasi lewat data, bukan hardcode).
+
+**Non-goals V2:** AI summary isi balasan, auto-reply balik dari sistem, matching berbasis isi email yang lebih canggih dari keyword sederhana (mis. NLP/AI-assisted matching) — dipertimbangkan untuk rilis jauh ke depan, bukan V2.
 
 ---
 
@@ -159,11 +171,20 @@ Smart Attachment + Peringatan Re-apply + Bounce Visibility
 ```
 Reply (baru)
  ├── ref: BatchRecipient (1)
- ├── gmail_thread_id
+ ├── gmail_thread_id (nullable — kosong untuk tier Possible/Indikasi yang di luar thread)
+ ├── gmail_message_id
+ ├── sender_email
  ├── snippet
  ├── received_at
- ├── is_likely_automated (boolean, heuristik)
+ ├── confidence_tier (enum: Confirmed, Likely, Possible, Indikasi)
+ ├── matched_via (string, mis. "thread", "sender_exact", "domain", "company_name")
+ ├── is_confirmed_by_user (boolean, hanya relevan untuk tier Possible/Indikasi — FR2-1.4)
+ ├── is_likely_automated (boolean, heuristik auto-reply — FR2-1.7)
  └── user_label (nullable)
+
+ExcludeListEntry (baru — untuk FR2-1.8)
+ ├── pattern (string, mis. "noreply@", domain tertentu)
+ └── created_at
 
 Notification (baru)
  ├── ref: User
@@ -233,3 +254,18 @@ Fitur V2 murni membangun di atas data dan skema V1 — tidak ada perubahan yang 
 |---|---|
 | **V2.1** | Evaluasi ulang Outlook, evaluasi ulang optimasi Batch berdasarkan feedback V2 |
 | **V2.2+** | Job Pipeline drag-and-drop penuh (setelah Replies Module terbukti stabil), Analytics mendalam, AI Summary balasan |
+| **V3** | Auto-resend lamaran yang belum dibalas (lihat §10.1) |
+
+### 10.1 V3 (Preview) — Auto-Resend
+
+Keputusan awal hasil diskusi, dicatat di sini supaya konteksnya tidak hilang saat V3 mulai dirancang detail:
+
+- **Trigger fully automatic** — begitu threshold waktu terlampaui dan belum ada balasan, sistem mengirim ulang secara otomatis (bukan sekadar reminder pasif seperti rencana awal "Follow Up Reminder").
+- **Tidak menggunakan sinyal "sudah dibuka" (open/view tracking).** Tracking pixel di body email dipertimbangkan tapi ditolak karena tidak reliable (banyak email client memblokir load gambar otomatis) dan berisiko memicu spam filter. Tracking lewat attachment (CV/PDF) ditolak lebih tegas lagi — attachment tidak otomatis ter-render saat email dibuka, dan menyisipkan trigger resource eksternal ke PDF adalah pola yang dikenali sebagai indikasi phishing oleh email security scanner; risikonya bisa membuat lampiran CV user ikut ter-flag berbahaya oleh sistem keamanan perusahaan tujuan.
+- **Threshold murni berbasis waktu** sejak email pertama terkirim (bukan kombinasi dengan status "Viewed").
+- **Threshold dapat dikustomisasi oleh user**, bukan dipatok 7 atau 14 hari — dengan catatan tetap perlu ada **batas minimum** (guard rail, kandidat: 5–7 hari) supaya user tidak bisa mengatur threshold terlalu agresif hingga terasa spam ke HR.
+- **Pengaturan threshold dua tingkat**: default global (Settings) yang bisa di-override per batch — kombinasi ini dipilih supaya user tidak perlu mengatur ulang tiap kali membuat batch baru, tapi tetap fleksibel untuk batch dengan karakteristik berbeda.
+- **Tetap ada approval window** sebelum resend benar-benar terkirim (mis. notifikasi "akan resend ke N perusahaan besok jam X, batalkan?") — supaya "fully automatic" tidak berarti user kehilangan kendali sepenuhnya.
+- **Template follow-up menggunakan template lamaran awal apa adanya** (reuse, bukan template terpisah) — dipilih demi kesederhanaan implementasi. Konsekuensinya: threshold waktu minimum (guard rail 5–7 hari) menjadi satu-satunya pengaman utama supaya email yang identik tidak terkesan spam/bug di mata HR, karena tidak ada pembeda konten pada email susulan.
+- **Batas jumlah resend per perusahaan dapat diatur user** (bukan hard limit tetap), mengikuti pola yang sama dengan threshold waktu. Sama seperti threshold waktu, ini butuh **batas atas** sebagai guard rail (kandidat: maksimal 3x, default 1x) — tanpa batas atas, user bisa mengatur resend berkali-kali hingga berisiko akun ter-flag spam oleh HR/provider email.
+- **Auto-resend melewati (skip) pengecekan Peringatan Re-apply (§4.6 PRD V2).** Peringatan itu dirancang untuk mencegah user *tidak sadar* mengirim ulang ke perusahaan yang sama lewat wizard batch manual — sedangkan auto-resend memang diniatkan untuk re-apply ke perusahaan yang sama, sehingga peringatan tersebut tidak relevan dan sebaiknya tidak muncul di alur resend otomatis.

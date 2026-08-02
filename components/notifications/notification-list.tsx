@@ -66,6 +66,12 @@ export function NotificationBell() {
     setUnreadCount((prev) => Math.max(0, prev - 1))
   }
 
+  const handleMarkAllRead = async () => {
+    await fetch("/api/notifications/read-all", { method: "PATCH" })
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+    setUnreadCount(0)
+  }
+
   return (
     <div ref={ref} className="relative">
       <button

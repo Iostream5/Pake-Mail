@@ -40,3 +40,41 @@ export function createReplyWorker(processor: (job: any) => Promise<void>) {
     concurrency: 1,
   })
 }
+
+const RESEND_TRIGGER_QUEUE_NAME = process.env.BULL_RESEND_TRIGGER_QUEUE_NAME ?? "resend-trigger-queue"
+
+export const resendTriggerQueue = new Queue(RESEND_TRIGGER_QUEUE_NAME, {
+  connection: redis,
+  defaultJobOptions: {
+    attempts: 2,
+    backoff: { type: "exponential", delay: 30000 },
+    removeOnComplete: { count: 50 },
+    removeOnFail: { count: 20 },
+  },
+})
+
+export function createResendTriggerWorker(processor: (job: any) => Promise<void>) {
+  return new Worker(RESEND_TRIGGER_QUEUE_NAME, processor, {
+    connection: redis,
+    concurrency: 1,
+  })
+}
+
+const RESEND_EXECUTION_QUEUE_NAME = process.env.BULL_RESEND_EXECUTION_QUEUE_NAME ?? "resend-execution-queue"
+
+export const resendExecutionQueue = new Queue(RESEND_EXECUTION_QUEUE_NAME, {
+  connection: redis,
+  defaultJobOptions: {
+    attempts: 2,
+    backoff: { type: "exponential", delay: 30000 },
+    removeOnComplete: { count: 50 },
+    removeOnFail: { count: 20 },
+  },
+})
+
+export function createResendExecutionWorker(processor: (job: any) => Promise<void>) {
+  return new Worker(RESEND_EXECUTION_QUEUE_NAME, processor, {
+    connection: redis,
+    concurrency: 1,
+  })
+}

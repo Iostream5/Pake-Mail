@@ -1,4 +1,5 @@
 import { requireUserId, handleApi, apiSuccess } from "@/lib/api-helpers"
+import { prisma } from "@/lib/prisma"
 import { checkReapply } from "@/lib/reapply-check"
 
 export async function POST(request: Request) {
@@ -10,7 +11,10 @@ export async function POST(request: Request) {
       return apiSuccess({ warnings: [] })
     }
 
-    const warnings = await checkReapply(userId, hrEmails)
+    const settings = await prisma.settings.findUnique({ where: { userId } })
+    const windowDays = settings?.reapplyWindowDays ?? 30
+
+    const warnings = await checkReapply(userId, hrEmails, windowDays)
     return apiSuccess({ warnings })
   })
 }

@@ -78,6 +78,28 @@ export function BatchWizard() {
   const [activeDays, setActiveDays] = useState<string[]>(["MON", "TUE", "WED", "THU", "FRI"])
   const [startImmediately, setStartImmediately] = useState(true)
 
+  // Auto-Resend (V3)
+  const [resendEnabled, setResendEnabled] = useState(false)
+  const [resendThresholdDays, setResendThresholdDays] = useState(7)
+  const [resendMaxCount, setResendMaxCount] = useState(1)
+  const [resendSettingsLoaded, setResendSettingsLoaded] = useState(false)
+
+  // Load user's default resend settings
+  useEffect(() => {
+    if (resendSettingsLoaded) return
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.data) {
+          setResendEnabled(res.data.resendEnabledDefault)
+          setResendThresholdDays(res.data.resendThresholdDaysDefault)
+          setResendMaxCount(res.data.resendMaxCountDefault)
+        }
+        setResendSettingsLoaded(true)
+      })
+      .catch(() => setResendSettingsLoaded(true))
+  }, [resendSettingsLoaded])
+
   const fetchAccounts = useCallback(async () => {
     try {
       const res = await fetch("/api/email-accounts")
@@ -141,6 +163,9 @@ export function BatchWizard() {
         if (data.activeHoursEnd) setActiveHoursEnd(data.activeHoursEnd)
         if (data.activeDays) setActiveDays(data.activeDays)
         if (data.startImmediately !== undefined) setStartImmediately(data.startImmediately)
+        if (data.resendEnabled !== undefined) setResendEnabled(data.resendEnabled)
+        if (data.resendThresholdDays) setResendThresholdDays(data.resendThresholdDays)
+        if (data.resendMaxCount) setResendMaxCount(data.resendMaxCount)
       }
     } catch {}
     setHydrated(true)
@@ -153,12 +178,14 @@ export function BatchWizard() {
       step, name, description, selectedAccount, selectedTemplate,
       selectedDocs, selectedRecipients, scheduledAt, delaySeconds,
       activeHoursStart, activeHoursEnd, activeDays, startImmediately,
+      resendEnabled, resendThresholdDays, resendMaxCount,
     }
     localStorage.setItem(DRAFT_KEY, JSON.stringify(data))
   }, [
     hydrated, step, name, description, selectedAccount, selectedTemplate,
     selectedDocs, selectedRecipients, scheduledAt, delaySeconds,
     activeHoursStart, activeHoursEnd, activeDays, startImmediately,
+    resendEnabled, resendThresholdDays, resendMaxCount,
   ])
 
   const handleCancel = () => {
@@ -263,6 +290,9 @@ export function BatchWizard() {
           activeHoursEnd,
           activeDays: activeDays.join(","),
           scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+          resendEnabledOverride: resendEnabled || null,
+          resendThresholdDaysOverride: resendThresholdDays,
+          resendMaxCountOverride: resendMaxCount,
         }),
       })
       if (!res.ok) {
@@ -577,6 +607,43 @@ export function BatchWizard() {
               />
               Start immediately after creation
             </label>
+
+            <div className="border-t border-ash-stroke pt-6 mt-6">
+              <h4 className="text-sm font-mono text-bone uppercase tracking-widest mb-4">Auto-Resend</h4>
+              <label className="flex items-center gap-2 text-sm font-mono text-bone cursor-pointer mb-4">
+                <div className={cn("w-4 h-4 border flex items-center justify-center rounded-sm", resendEnabled ? "border-bone bg-bone" : "border-ash-stroke bg-obsidian-canvas")}>
+                  {resendEnabled && <Icon name="check" className="text-ink-black text-xs" />}
+                </div>
+                <input
+                  type="checkbox"
+                  checked={resendEnabled}
+                  onChange={(e) => setResendEnabled(e.target.checked)}
+                  className="hidden"
+                />
+                Enable Auto-Resend
+              </label>
+              {resendEnabled && (
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Resend threshold (days)"
+                    type="number"
+                    min={3}
+                    value={resendThresholdDays}
+                    onChange={(e) => setResendThresholdDays(Number(e.target.value))}
+                    helperText="Min 3 days after first send"
+                  />
+                  <Input
+                    label="Max resend count"
+                    type="number"
+                    min={1}
+                    max={3}
+                    value={resendMaxCount}
+                    onChange={(e) => setResendMaxCount(Number(e.target.value))}
+                    helperText="Max 3 times per company"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -629,6 +696,14 @@ export function BatchWizard() {
               <div className="flex items-center justify-between p-4">
                 <span className="text-xs font-mono text-warm-granite uppercase tracking-wider">Active Days</span>
                 <span className="text-sm font-mono text-bone">{activeDays.join(", ")}</span>
+              </div>
+              <div className="flex items-center justify-between p-4">
+                <span className="text-xs font-mono text-warm-granite uppercase tracking-wider">Auto-Resend</span>
+                <span className="text-sm font-mono text-bone">
+                  {resendEnabled
+                    ? `${resendThresholdDays}d, max ${resendMaxCount}x`
+                    : "Disabled"}
+                </span>
               </div>
             </div>
           </div>

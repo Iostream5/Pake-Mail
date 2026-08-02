@@ -54,6 +54,19 @@ enum RecipientStatus {
   ACCEPTED
 }
 
+enum ConfidenceTier {
+  CONFIRMED
+  LIKELY
+  POSSIBLE
+  INDIKASI
+}
+
+enum ResendScheduleStatus {
+  PENDING_APPROVAL
+  CANCELLED
+  SENT
+}
+
 // ─── CORE ────────────────────────────────────────────────
 
 model User {
@@ -76,6 +89,8 @@ model User {
   activityLogs  ActivityLog[]
   notifications Notification[]
   documentTagMappings DocumentTagMapping[]
+  settings           Settings?
+  excludeListEntries ExcludeListEntry[]
 }
 
 model Account {
@@ -240,8 +255,11 @@ model Batch {
   activeHoursEnd     String?     // "17:00"
   activeDays         String?     // "MON,TUE,WED,THU,FRI"
   retryMax           Int         @default(2)
-  autoStopThreshold  Float       @default(0.3) // 30% failure rate
-  createdAt          DateTime    @default(now())
+  autoStopThreshold        Float     @default(0.3) // 30% failure rate
+  resendEnabledOverride     Boolean?
+  resendThresholdDaysOverride Int?
+  resendMaxCountOverride    Int?
+  createdAt                 DateTime  @default(now())
 
   batchDocuments   BatchDocument[]
   batchRecipients  BatchRecipient[]
@@ -269,11 +287,15 @@ model BatchRecipient {
   gmailThreadId   String?
   gmailMessageId  String?
   errorLog        String?
-  retryCount      Int             @default(0)
-  updatedAt       DateTime        @updatedAt
+  retryCount              Int             @default(0)
+  resendCount             Int             @default(0)
+  lastResendAt            DateTime?
+  nextResendScheduledAt   DateTime?
+  updatedAt               DateTime        @updatedAt
 
-  activityLogs ActivityLog[]
-  replies      Reply[]
+  activityLogs    ActivityLog[]
+  replies         Reply[]
+  resendSchedules ResendSchedule[]
 
   @@unique([batchId, recipientId])
 }
@@ -282,15 +304,20 @@ model Reply {
   id                String          @id @default(uuid())
   batchRecipientId  String
   batchRecipient    BatchRecipient  @relation(fields: [batchRecipientId], references: [id], onDelete: Cascade)
-  gmailThreadId     String
+  gmailThreadId     String?
+  senderEmail       String
   snippet           String
   receivedAt        DateTime
+  confidenceTier    ConfidenceTier
+  matchedVia        String
   isLikelyAutomated Boolean         @default(false)
+  isConfirmedByUser Boolean         @default(false)
   userLabel         String?
   createdAt         DateTime        @default(now())
 
   @@index([batchRecipientId])
   @@index([gmailThreadId])
+  @@index([confidenceTier])
 }
 
 model ActivityLog {
@@ -331,4 +358,42 @@ model DocumentTagMapping {
 
   @@unique([userId, positionTag, documentId])
   @@index([userId, positionTag])
+}
+
+// ─── V2: EXCLUDE LIST ────────────────────────────────────
+
+model ExcludeListEntry {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pattern   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, pattern])
+  @@index([userId])
+}
+
+// ─── V3: AUTO-RESEND ─────────────────────────────────────
+
+model Settings {
+  id                          String  @id @default(uuid())
+  userId                      String  @unique
+  user                        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resendEnabledDefault         Boolean @default(false)
+  resendThresholdDaysDefault   Int     @default(7)
+  resendMaxCountDefault        Int     @default(1)
+  resendApprovalWindowHours    Int     @default(24)
+  reapplyWindowDays            Int     @default(30)
+}
+
+model ResendSchedule {
+  id               String                @id @default(uuid())
+  batchRecipientId String
+  batchRecipient   BatchRecipient        @relation(fields: [batchRecipientId], references: [id], onDelete: Cascade)
+  scheduledSendAt  DateTime
+  status           ResendScheduleStatus  @default(PENDING_APPROVAL)
+  createdAt        DateTime              @default(now())
+
+  @@index([batchRecipientId])
+  @@index([status])
 }

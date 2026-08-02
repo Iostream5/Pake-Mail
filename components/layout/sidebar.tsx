@@ -15,7 +15,9 @@ const navItems = [
   { href: "/dashboard/recipients", label: "Recipients", icon: "group" },
   { href: "/dashboard/batches", label: "Batches", icon: "layers" },
   { href: "/dashboard/replies", label: "Replies", icon: "forward_to_inbox" },
+  { href: "/dashboard/resend", label: "Resend", icon: "repeat" },
   { href: "/dashboard/email-accounts", label: "Email Accounts", icon: "mail" },
+  { href: "/dashboard/settings", label: "Settings", icon: "tune" },
 ]
 
 export function Sidebar({ user }: { user: { name?: string | null; email?: string | null } }) {
@@ -101,7 +103,9 @@ export function Sidebar({ user }: { user: { name?: string | null; email?: string
               <p className="truncate text-xs font-bold text-bone">{user.name}</p>
               <p className="truncate text-[10px] text-warm-granite">{user.email}</p>
             </div>
-            <Icon name="settings" size="sm" className="text-warm-granite flex-shrink-0" />
+            <Link href="/dashboard/settings" onClick={close}>
+              <Icon name="tune" size="sm" className="text-warm-granite flex-shrink-0" />
+            </Link>
           </div>
         </div>
       </aside>

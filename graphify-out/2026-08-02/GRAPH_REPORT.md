@@ -1,7 +1,7 @@
 # Graph Report - pake-mail  (2026-08-02)
 
 ## Corpus Check
-- 139 files · ~88,573 words
+- 139 files · ~88,565 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary

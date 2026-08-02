@@ -1,11 +1,11 @@
-# Graph Report - pake-mail  (2026-08-02)
+# Graph Report - pake-mail  (2026-07-30)
 
 ## Corpus Check
-- 139 files · ~88,573 words
+- 137 files · ~88,210 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 813 nodes · 1568 edges · 55 communities (45 shown, 10 thin omitted)
+- 799 nodes · 1550 edges · 56 communities (46 shown, 10 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -65,6 +65,7 @@
 - page.tsx
 - 1. LANDING PAGE (Halaman Depan — `/`)
 - batch-detail.tsx
+- route.ts
 - notifications.ts
 - 1. LANDING PAGE (Halaman Depan — `/`)
 
@@ -73,7 +74,7 @@
 2. `handleApi()` - 96 edges
 3. `apiSuccess()` - 93 edges
 4. `apiError()` - 73 edges
-5. `cn()` - 34 edges
+5. `cn()` - 32 edges
 6. `Icon()` - 21 edges
 7. `compilerOptions` - 16 edges
 8. `Product Requirements Document (PRD)` - 16 edges
@@ -83,23 +84,23 @@
 ## Surprising Connections (you probably didn't know these)
 - `main()` --references--> `worker`  [EXTRACTED]
   workers/index.ts → package.json
-- `GET()` --calls--> `requireUserId()`  [EXTRACTED]
-  app/api/email-accounts/callback/route.ts → lib/api-helpers.ts
-- `POST()` --calls--> `apiError()`  [EXTRACTED]
-  app/api/email-accounts/route.ts → lib/api-helpers.ts
 - `POST()` --calls--> `apiSuccess()`  [EXTRACTED]
-  app/api/email-accounts/route.ts → lib/api-helpers.ts
+  app/api/batches/reapply-check/route.ts → lib/api-helpers.ts
 - `POST()` --calls--> `handleApi()`  [EXTRACTED]
-  app/api/email-accounts/route.ts → lib/api-helpers.ts
+  app/api/batches/reapply-check/route.ts → lib/api-helpers.ts
+- `POST()` --calls--> `requireUserId()`  [EXTRACTED]
+  app/api/batches/reapply-check/route.ts → lib/api-helpers.ts
+- `GET()` --calls--> `getSignedFileUrl()`  [EXTRACTED]
+  app/api/documents/preview/route.ts → lib/storage.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (55 total, 10 thin omitted)
+## Communities (56 total, 10 thin omitted)
 
 ### Community 0 - "requireUserId"
-Cohesion: 0.07
-Nodes (81): POST(), GET(), POST(), POST(), DELETE(), POST(), POST(), DELETE() (+73 more)
+Cohesion: 0.08
+Nodes (74): POST(), GET(), POST(), DELETE(), POST(), POST(), DELETE(), GET() (+66 more)
 
 ### Community 1 - "dependencies"
 Cohesion: 0.05
@@ -126,8 +127,8 @@ Cohesion: 0.08
 Nodes (24): 10. Kebutuhan Non-Fungsional, 11. Rekomendasi Arsitektur & Tech Stack, 12. Risiko & Asumsi, 13. Roadmap Setelah V1, 14. Ringkasan Prioritas V1 (Definition of Done), 1. Ringkasan Eksekutif, 2. Latar Belakang & Masalah, 3. Target User & Persona (+16 more)
 
 ### Community 7 - "mono-label.tsx"
-Cohesion: 0.21
-Nodes (7): features, footerLinks, EmailAccount, EmailAccountsList(), getInitials(), Button, ButtonProps
+Cohesion: 0.15
+Nodes (10): features, footerLinks, EmailAccount, EmailAccountsList(), getInitials(), ResendList(), ResendScheduleItem, Button (+2 more)
 
 ### Community 8 - "Environment & Requirements Configuration — Pake Mail V1"
 Cohesion: 0.09
@@ -139,19 +140,19 @@ Nodes (18): 10. Roadmap Setelah V3, 1. Ringkasan Eksekutif, 2. Tujuan & Prinsip 
 
 ### Community 10 - "dashboard-content.tsx"
 Cohesion: 0.13
-Nodes (19): DashboardStats, ActivityItem, EVENT_ICONS, RecentActivity(), RunningBatch(), RunningBatchItem, UpcomingBatchItem, UpcomingSchedule() (+11 more)
+Nodes (16): DashboardContent(), DashboardStats, ActivityItem, EVENT_ICONS, RecentActivity(), RunningBatch(), RunningBatchItem, UpcomingBatchItem (+8 more)
 
 ### Community 11 - "Audit V1 — Pake Mail vs PRD v1"
 Cohesion: 0.10
 Nodes (20): 1. Auth & Middleware, 2. Email Account (Modul 8.1), 3. Profile (Modul 8.2), 4. Document Library (Modul 8.3), 5. Template Email (Modul 8.4), 6. Recipient Management (Modul 8.5), 7. Batch Lamaran — Core Module (Modul 8.6), Audit V1 — Pake Mail vs PRD v1 (+12 more)
 
 ### Community 12 - "cn"
-Cohesion: 0.11
-Nodes (19): navItems, Dialog(), DialogProps, Label, LabelProps, colorClasses, MonoLabel(), MonoLabelColor (+11 more)
+Cohesion: 0.13
+Nodes (15): NotificationBell(), NotificationItem, TYPE_ICONS, Dialog(), DialogProps, Label, LabelProps, fillColorMap (+7 more)
 
 ### Community 13 - "storage.ts"
 Cohesion: 0.08
-Nodes (47): GET(), POST(), categorizeError(), ERROR_PATTERNS, ErrorCategory, decrypt(), encrypt(), KEY (+39 more)
+Nodes (48): GET(), categorizeError(), ERROR_PATTERNS, ErrorCategory, decrypt(), encrypt(), KEY, AUTO_REPLY_PATTERNS (+40 more)
 
 ### Community 14 - "profile-form.tsx"
 Cohesion: 0.09
@@ -162,24 +163,20 @@ Cohesion: 0.17
 Nodes (11): Catatan Penting, Fase 0 — Fondasi V3, Fase 1 — Konfigurasi Threshold & Batas Resend, Fase 2 — Logika Trigger & Penjadwalan, Fase 3 — Approval Window, Fase 4 — Eksekusi Resend, Fase 5 — QA, Hardening & Beta Terbatas, Gerbang Sebelum Mulai (Bukan Fase, tapi Syarat Wajib) (+3 more)
 
 ### Community 16 - "batch-wizard.tsx"
-Cohesion: 0.22
-Nodes (7): BatchWizard(), DAYS, Document, EmailAccount, Recipient, STEPS, Template
+Cohesion: 0.17
+Nodes (8): BatchWizard(), DAYS, Document, EmailAccount, Recipient, STEPS, Template, { handlers, signIn, signOut, auth }
 
 ### Community 17 - "Project Phasing — Pake Mail V1"
 Cohesion: 0.17
 Nodes (11): Catatan Penting, Fase 0 — Fondasi Proyek, Fase 1 — Autentikasi & Koneksi Email, Fase 2 — Modul Data Reusable, Fase 3 — Mesin Batch (Core Module), Fase 4 — Monitoring & Status Tracking, Fase 5 — QA, Hardening & Beta, Prinsip Urutan Pengerjaan (+3 more)
 
 ### Community 18 - "document-list.tsx"
-Cohesion: 0.25
-Nodes (6): CATEGORY_LABELS, CATEGORY_LIMITS, CATEGORY_OPTIONS, Document, Select, SelectProps
-
-### Community 19 - "template-list.tsx"
-Cohesion: 0.17
-Nodes (11): build, builder, dockerfilePath, deploy, healthcheckPath, healthcheckTimeout, numReplicas, restartPolicyMaxRetries (+3 more)
+Cohesion: 0.19
+Nodes (8): CATEGORY_LABELS, CATEGORY_LIMITS, CATEGORY_OPTIONS, Document, DocumentList(), getCapacityClass(), Select, SelectProps
 
 ### Community 20 - "recipient-list.tsx"
-Cohesion: 0.33
-Nodes (8): emptyForm, Recipient, Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+Cohesion: 0.24
+Nodes (9): emptyForm, Recipient, RecipientList(), Table, TableBody, TableCell, TableHead, TableHeader (+1 more)
 
 ### Community 21 - "Pake Mail — UI Design Reference untuk Figma"
 Cohesion: 0.20
@@ -242,7 +239,7 @@ Cohesion: 0.50
 Nodes (3): Deploy on Vercel, Getting Started, Learn More
 
 ### Community 39 - "2. HALAMAN LOGIN & REGISTER (`/login`, `/register`)"
-Cohesion: 0.21
+Cohesion: 0.18
 Nodes (12): AVATAR_COLORS, BatchRecipient, getAvatarColor(), getInitials(), LABEL_OPTIONS, Pagination, Reply, ReplyBatch (+4 more)
 
 ### Community 43 - "AuthError"
@@ -250,12 +247,20 @@ Cohesion: 0.18
 Nodes (10): Catatan Penting, Fase 0 — Fondasi V2, Fase 1 — Replies Module (Core), Fase 2 — Fitur Independen, Fase 3 — Dashboard & Reply Rate per Template, Fase 4 — Notifikasi Sederhana, Fase 5 — QA, Hardening & Beta, Prinsip Urutan Pengerjaan (+2 more)
 
 ### Community 50 - "page.tsx"
-Cohesion: 0.28
-Nodes (5): LoginForm(), colorMap, StatusPulse(), StatusPulseColor, StatusPulseProps
+Cohesion: 0.40
+Nodes (3): BatchList(), BatchListItem, STATUS_COLORS
 
 ### Community 51 - "1. LANDING PAGE (Halaman Depan — `/`)"
-Cohesion: 0.05
-Nodes (22): DashboardContent(), BatchDetail(), BatchDetailData, MANUAL_STATUSES, parseErrorLog(), RECIPIENT_STATUS_COLORS, STATUS_COLORS, BatchList() (+14 more)
+Cohesion: 0.11
+Nodes (18): LoginForm(), DashboardShell(), SidebarContext, SidebarContextType, useSidebar(), Header(), navItems, Sidebar() (+10 more)
+
+### Community 52 - "batch-detail.tsx"
+Cohesion: 0.28
+Nodes (6): BatchDetail(), BatchDetailData, MANUAL_STATUSES, parseErrorLog(), RECIPIENT_STATUS_COLORS, STATUS_COLORS
+
+### Community 55 - "route.ts"
+Cohesion: 0.43
+Nodes (5): POST(), checkReapply(), EXCLUDED_STATUSES, getRecipientByEmail(), ReapplyWarning
 
 ### Community 57 - "notifications.ts"
 Cohesion: 0.47
@@ -266,7 +271,7 @@ Cohesion: 0.67
 Nodes (3): 1. LANDING PAGE (Halaman Depan — `/`), Data / State, Komponen
 
 ## Knowledge Gaps
-- **386 isolated node(s):** `$schema`, `.opencode/plugins/graphify.js`, `DashboardStats`, `CATEGORY_LIMITS`, `geistSans` (+381 more)
+- **376 isolated node(s):** `$schema`, `.opencode/plugins/graphify.js`, `DashboardStats`, `CATEGORY_LIMITS`, `geistSans` (+371 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -274,15 +279,15 @@ Nodes (3): 1. LANDING PAGE (Halaman Depan — `/`), Data / State, Komponen
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `dependencies` connect `dependencies` to `devDependencies`?**
-  _High betweenness centrality (0.072) - this node is a cross-community bridge._
-- **Why does `Dialog()` connect `cn` to `dependencies`, `profile-form.tsx`, `document-list.tsx`, `1. LANDING PAGE (Halaman Depan — `/`)`, `recipient-list.tsx`?**
-  _High betweenness centrality (0.062) - this node is a cross-community bridge._
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._
+- **Why does `Dialog()` connect `cn` to `dependencies`, `profile-form.tsx`, `page.tsx`, `document-list.tsx`, `batch-detail.tsx`, `recipient-list.tsx`?**
+  _High betweenness centrality (0.065) - this node is a cross-community bridge._
 - **Why does `react` connect `dependencies` to `cn`?**
-  _High betweenness centrality (0.060) - this node is a cross-community bridge._
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **What connects `$schema`, `.opencode/plugins/graphify.js`, `DashboardStats` to the rest of the system?**
-  _386 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _376 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `requireUserId` be split into smaller, more focused modules?**
-  _Cohesion score 0.06976134277471807 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08239148239148239 - nodes in this community are weakly interconnected._
 - **Should `dependencies` be split into smaller, more focused modules?**
   _Cohesion score 0.046511627906976744 - nodes in this community are weakly interconnected._
 - **Should `Pake Mail — E2E User Flow Dokumentasi` be split into smaller, more focused modules?**

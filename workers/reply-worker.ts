@@ -10,7 +10,7 @@ export async function processReplyPoll() {
   const result = await pollAllUsers()
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1)
-  console.log(`[ReplyWorker] Poll complete: ${result.totalNewReplies} new replies from ${result.accountsChecked} accounts in ${elapsed}s`)
+  console.log(`[ReplyWorker] Poll complete: ${result.totalNewReplies} new replies, ${result.totalPotential} potential matches from ${result.accountsChecked} accounts in ${elapsed}s`)
 
   return result
 }

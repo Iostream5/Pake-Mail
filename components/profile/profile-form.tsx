@@ -39,6 +39,8 @@ interface Profile {
   email?: string | null
   address?: string | null
   birthDate?: string | null
+  linkedinUrl?: string | null
+  portfolioUrl?: string | null
   educations?: Education[]
   experiences?: Experience[]
   links?: ProfileLink[]
