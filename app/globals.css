@@ -188,3 +188,128 @@ body {
 .press-effect:active {
   transform: scale(0.98);
 }
+
+/* ─────────────────────────────────────────────── 
+   LIVING BACKGROUND SYSTEM — grid, scan, glow, ticker
+   ─────────────────────────────────────────────── */
+
+/* Terminal blue-grid backdrop that slowly drifts */
+@keyframes grid-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 34px;
+  }
+}
+
+.terminal-grid {
+  background-image:
+    linear-gradient(to right, rgba(238, 96, 24, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(238, 96, 24, 0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+  animation: grid-drift 6s linear infinite;
+}
+
+/* Sweeping scan reflection */
+@keyframes scan-sweep {
+  0% {
+    transform: translateY(-120%);
+  }
+  100% {
+    transform: translateY(1200%);
+  }
+}
+
+.scan-line {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(160, 202, 146, 0.06),
+    transparent
+  );
+  animation: scan-sweep 7s linear infinite;
+}
+
+/* Slow rotating conic glow for depth */
+@keyframes conic-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.conic-glow {
+  animation: conic-spin 24s linear infinite;
+}
+
+/* Hollow outline text that shimmers toward warm white */
+@keyframes neon-text {
+  0%,
+  100% {
+    color: rgba(238, 238, 238, 0.05);
+  }
+  50% {
+    color: rgba(238, 238, 238, 0.09);
+  }
+}
+
+.animated-neon-text {
+  animation: neon-text 5s ease-in-out infinite;
+}
+
+/* Twinkling status particles */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+/* Anchors clear the fixed header when jumping via nav */
+html {
+  scroll-behavior: smooth;
+}
+
+section[id],
+div[id] {
+  scroll-margin-top: 90px;
+}
+
+/* ───────────────────────────────────────────────
+   DOC MODAL OPEN ANIMATION
+   ─────────────────────────────────────────────── */
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal-overlay {
+    animation: modal-fade 0.24s ease-out both;
+  }
+  .modal-panel {
+    animation: modal-rise 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}

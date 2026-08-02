@@ -54,8 +54,13 @@ export function Sidebar({ user }: { user: { name?: string | null; email?: string
           <Link
             href="/dashboard"
             onClick={close}
-            className="block"
+            className="flex items-center gap-3"
           >
+            <img
+              src="/logo.png"
+              alt="Pake Mail logo"
+              className="h-8 w-8 flex-shrink-0 object-contain"
+            />
             <h1 className="font-[family-name:var(--font-geist-sans)] text-2xl font-normal text-bone tracking-tighter uppercase">
               Pake Mail
             </h1>
