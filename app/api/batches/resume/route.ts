@@ -14,6 +14,7 @@ export async function POST(request: Request) {
         where: { status: "PENDING" },
         include: { recipient: true },
       },
+      batchDocuments: true,
     },
   })
 
@@ -31,7 +32,8 @@ export async function POST(request: Request) {
         recipientId: br.recipientId,
         emailAccountId: batch.emailAccountId,
         templateId: batch.templateId,
-        documentIds: [],
+        documentIds: batch.batchDocuments.map((bd) => bd.documentId),
+        userId,
       },
       {
         delay: i * (batch.delaySeconds * 1000),
