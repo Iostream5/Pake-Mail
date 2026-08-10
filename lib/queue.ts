@@ -1,5 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Queue, Worker, type QueueOptions } from "bullmq"
 import { redis } from "@/lib/redis"
+
+export function numEnv(
+  name: string,
+  defaultValue: number,
+  options?: { min?: number; max?: number }
+): number {
+  const val = process.env[name]
+  if (val === undefined) return defaultValue
+  const parsed = Number(val)
+  if (!Number.isFinite(parsed)) return defaultValue
+  if (options?.min !== undefined && parsed < options.min) return options.min
+  if (options?.max !== undefined && parsed > options.max) return options.max
+  return parsed
+}
 
 const QUEUE_NAME = process.env.BULL_QUEUE_NAME ?? "email-batch-queue"
 const REPLY_QUEUE_NAME = process.env.BULL_REPLY_QUEUE_NAME ?? "reply-poll-queue"
@@ -47,10 +62,10 @@ function lazyQueue(
 
 const baseOptions = {
   defaultJobOptions: {
-    attempts: Number(process.env.BULL_MAX_RETRIES) ?? 3,
+    attempts: numEnv("BULL_MAX_RETRIES", 3, { min: 1 }),
     backoff: {
       type: "exponential",
-      delay: Number(process.env.BULL_DEFAULT_RETRY_DELAY) ?? 60000,
+      delay: numEnv("BULL_DEFAULT_RETRY_DELAY", 60000, { min: 0 }),
     },
     removeOnComplete: { count: 100 },
     removeOnFail: { count: 50 },
@@ -86,10 +101,10 @@ export const resendExecutionQueue = lazyQueue(
   }
 )
 
-export function createEmailWorker(processor: (job: any) => Promise<void>) {
+export function createEmailWorker(processor: (job: any, token?: any) => Promise<void>) {
   return new Worker(QUEUE_NAME, processor, {
     connection: redis,
-    concurrency: Number(process.env.BULL_CONCURRENCY) ?? 5,
+    concurrency: numEnv("BULL_CONCURRENCY", 1, { min: 1 }),
   })
 }
 
