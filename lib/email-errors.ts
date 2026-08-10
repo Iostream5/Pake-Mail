@@ -1,6 +1,8 @@
+export type ErrorCategoryName = "temporary" | "permanent" | "quota" | "unknown" | "auth" | "attachment"
+
 interface ErrorCategory {
   friendlyMessage: string
-  category: "temporary" | "permanent" | "quota" | "unknown"
+  category: ErrorCategoryName
   suggestedAction?: string
 }
 
@@ -87,11 +89,18 @@ const ERROR_PATTERNS: Array<{ pattern: RegExp; category: ErrorCategory }> = [
     },
   },
   {
-    pattern: /authentication.*(?:fail|required|error)/i,
+    pattern: /authentication.*(?:fail|required|error)|invalid_grant|token|auth/i,
     category: {
       friendlyMessage: "Kesalahan autentikasi akun email",
-      category: "permanent",
+      category: "auth",
       suggestedAction: "Putuskan dan sambungkan ulang akun email di Pengaturan",
+    },
+  },
+  {
+    pattern: /attachment.*(?:too large|limit|error|failed|invalid|not found|fetch)/i,
+    category: {
+      friendlyMessage: "Kesalahan pada file lampiran email",
+      category: "attachment",
     },
   },
   {
@@ -117,6 +126,10 @@ const ERROR_PATTERNS: Array<{ pattern: RegExp; category: ErrorCategory }> = [
     },
   },
 ]
+
+export function isRetryable(category: ErrorCategoryName): boolean {
+  return category === "temporary" || category === "unknown"
+}
 
 export function categorizeError(rawError: string): ErrorCategory {
   for (const { pattern, category } of ERROR_PATTERNS) {

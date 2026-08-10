@@ -12,12 +12,15 @@ export async function POST(request: Request) {
     if (batch.status !== "RUNNING") return apiError("Can only pause a running batch")
 
     const pendingRecipients = await prisma.batchRecipient.findMany({
-      where: { batchId: id, status: "PENDING" },
+      where: {
+        batchId: id,
+        status: { in: ["PENDING", "RETRY"] },
+      },
       select: { id: true },
     })
 
     const removals = pendingRecipients.map((br) =>
-      emailQueue.remove(`send-${br.id}`).catch(() => {})
+      emailQueue.remove(`send:${br.id}`).catch(() => {})
     )
     await Promise.all(removals)
 

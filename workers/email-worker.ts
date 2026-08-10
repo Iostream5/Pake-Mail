@@ -1,8 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma"
 import { decrypt } from "@/lib/encryption"
-import { getSignedFileUrl } from "@/lib/storage"
 import { categorizeError } from "@/lib/email-errors"
 import { google } from "googleapis"
+import { redis } from "@/lib/redis"
+import { isWithinWindow, nextWindowStart } from "@/lib/active-window"
+import { fetchAttachments, assembleMimeMessage } from "@/lib/attachments"
+import { updateBatchProgress } from "@/lib/batch-progress"
+import { DelayedError } from "bullmq"
 
 interface SendJobData {
   batchRecipientId: string
@@ -14,7 +19,8 @@ interface SendJobData {
   userId: string
 }
 
-export async function processEmailSend(jobData: SendJobData) {
+export async function processEmailSend(job: any, token?: any) {
+  const jobData = job.data as SendJobData
   const { batchRecipientId, batchId, recipientId, emailAccountId, templateId, documentIds, userId } = jobData
 
   const batch = await prisma.batch.findUnique({ where: { id: batchId } })
@@ -25,6 +31,7 @@ export async function processEmailSend(jobData: SendJobData) {
       where: { id: batchRecipientId },
       data: { status: "SKIPPED" },
     })
+    await updateBatchProgress(batchId)
     return
   }
 
@@ -32,6 +39,22 @@ export async function processEmailSend(jobData: SendJobData) {
     return
   }
 
+  const currentRecipient = await prisma.batchRecipient.findUnique({
+    where: { id: batchRecipientId },
+  })
+  if (!currentRecipient || !["PENDING", "RETRY"].includes(currentRecipient.status)) {
+    return
+  }
+
+  // B4 Active Window check
+  const now = new Date()
+  if (!isWithinWindow(now, batch)) {
+    const resumeTime = nextWindowStart(now, batch)
+    await job.moveToDelayed(resumeTime, token)
+    throw new DelayedError()
+  }
+
+  // Transition batch status from SCHEDULED to RUNNING
   if (batch.status === "SCHEDULED") {
     await prisma.batch.update({
       where: { id: batchId },
@@ -39,13 +62,30 @@ export async function processEmailSend(jobData: SendJobData) {
     })
   }
 
-  const currentRecipient = await prisma.batchRecipient.findUnique({
-    where: { id: batchRecipientId },
-  })
-  if (!currentRecipient || currentRecipient.status !== "PENDING") {
-    return
+  // B5/B6 Concurrency & Delay Locking
+  const nowMs = Date.now()
+  const delayMs = batch.delaySeconds * 1000
+
+  const lastSentStr = await redis.get(`last-sent:${emailAccountId}`)
+  const lastSent = lastSentStr ? Number(lastSentStr) : 0
+  const elapsed = nowMs - lastSent
+
+  if (elapsed < delayMs) {
+    const remainingWait = delayMs - elapsed
+    await job.moveToDelayed(nowMs + remainingWait, token)
+    throw new DelayedError()
   }
 
+  const lockKey = `send-lock:${emailAccountId}`
+  const lockAcquired = await redis.set(lockKey, "1", "PX", delayMs, "NX")
+  if (!lockAcquired) {
+    const lockTTL = await redis.pttl(lockKey)
+    const remainingWait = lockTTL > 0 ? lockTTL : delayMs
+    await job.moveToDelayed(nowMs + remainingWait, token)
+    throw new DelayedError()
+  }
+
+  // Load remaining data
   const [account, template, recipient, profile] = await Promise.all([
     prisma.emailAccount.findUnique({ where: { id: emailAccountId } }),
     prisma.emailTemplate.findUnique({ where: { id: templateId } }),
@@ -60,6 +100,7 @@ export async function processEmailSend(jobData: SendJobData) {
     throw new Error("Missing required data for email send")
   }
 
+  // B13 OAuth Token Persistence Setup
   const tokens = JSON.parse(decrypt(account.oauthToken))
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -67,13 +108,21 @@ export async function processEmailSend(jobData: SendJobData) {
   )
   oauth2Client.setCredentials(tokens)
 
-  oauth2Client.on("tokens", async (newTokens) => {
-    if (newTokens.refresh_token) {
-      const { encrypt } = await import("@/lib/encryption")
-      await prisma.emailAccount.update({
-        where: { id: emailAccountId },
-        data: { oauthToken: encrypt(JSON.stringify({ ...tokens, ...newTokens })) },
-      })
+  let tokenChanged = false
+  const currentTokens = { ...tokens }
+
+  oauth2Client.on("tokens", (newTokens) => {
+    let changed = false
+    const nt = newTokens as Record<string, any>
+    const ct = currentTokens as Record<string, any>
+    for (const key of Object.keys(nt)) {
+      if (nt[key] !== ct[key]) {
+        changed = true
+        ct[key] = nt[key]
+      }
+    }
+    if (changed) {
+      tokenChanged = true
     }
   })
 
@@ -98,83 +147,151 @@ export async function processEmailSend(jobData: SendJobData) {
     throw new Error(`Template contains unresolved variables: ${missingVars.join(", ")}`)
   }
 
-  const attachments = []
-  for (const docId of documentIds) {
-    const doc = await prisma.document.findUnique({ where: { id: docId } })
-    if (doc) {
-      const url = await getSignedFileUrl(doc.fileUrl)
-      attachments.push({ url, filename: doc.name })
-    }
-  }
-
-  const boundary = `boundary${Date.now()}`
-  const mimeParts = [
-    `From: ${account.email}`,
-    `To: ${recipient.hrEmail}`,
-    `Subject: =?UTF-8?B?${Buffer.from(subject).toString("base64")}?=`,
-    "MIME-Version: 1.0",
-    `Content-Type: multipart/mixed; boundary="${boundary}"`,
-    "",
-    `--${boundary}`,
-    "Content-Type: text/plain; charset=UTF-8",
-    "Content-Transfer-Encoding: base64",
-    "",
-    Buffer.from(body).toString("base64"),
-  ]
-
-  for (const attachment of attachments) {
-    const response = await fetch(attachment.url)
-    const fileBuffer = Buffer.from(await response.arrayBuffer())
-    mimeParts.push(
-      `--${boundary}`,
-      `Content-Type: application/octet-stream`,
-      'Content-Disposition: attachment; filename="=?UTF-8?B?' +
-        Buffer.from(attachment.filename).toString("base64") +
-        '?="',
-      "Content-Transfer-Encoding: base64",
-      "",
-      fileBuffer.toString("base64")
-    )
-  }
-
-  mimeParts.push(`--${boundary}--`)
-
-  const raw = Buffer.from(mimeParts.join("\n"), "utf-8").toString("base64url")
-
   let gmailThreadIdStr: string | null = null
   let gmailMessageIdStr: string | null = null
+
   try {
+    // B11 Fetch and compile attachments
+    const attachments = await fetchAttachments(documentIds)
+
+    // Assemble MIME message with CRLF (\r\n) line endings
+    const { raw, totalSize } = assembleMimeMessage({
+      from: account.email,
+      to: recipient.hrEmail,
+      subject,
+      body,
+      attachments,
+    })
+
+    // Validate 25MB limit before send
+    const limitBytes = 25 * 1024 * 1024
+    if (totalSize > limitBytes) {
+      throw new Error(`AttachmentError: Total ukuran email termasuk lampiran (${(totalSize / 1024 / 1024).toFixed(2)}MB) melebihi batas Gmail 25MB.`)
+    }
+
     const res = await gmail.users.messages.send({
       userId: "me",
       requestBody: { raw },
     })
     gmailThreadIdStr = res.data.threadId ?? null
     gmailMessageIdStr = res.data.id ?? null
+
+    // Successful Send Cooldown
+    await redis.set(`last-sent:${emailAccountId}`, String(Date.now()))
   } catch (sendErr) {
+    if (sendErr instanceof DelayedError) {
+      throw sendErr
+    }
+
     const rawMessage = sendErr instanceof Error ? sendErr.message : String(sendErr)
     const categorized = categorizeError(rawMessage)
 
-    await prisma.batchRecipient.update({
-      where: { id: batchRecipientId },
-      data: {
-        status: "FAILED",
-        errorLog: JSON.stringify({ raw: rawMessage, friendly: categorized.friendlyMessage, category: categorized.category }),
-      },
-    })
+    // Check classification routing
+    if (categorized.category === "permanent" || categorized.category === "attachment") {
+      await prisma.batchRecipient.update({
+        where: { id: batchRecipientId },
+        data: {
+          status: "FAILED",
+          errorLog: JSON.stringify({ raw: rawMessage, friendly: categorized.friendlyMessage, category: categorized.category }),
+        },
+      })
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          batchId,
+          batchRecipientId,
+          eventType: "EMAIL_FAILED",
+          message: categorized.friendlyMessage,
+        },
+      })
+      await updateBatchProgress(batchId)
+      return
+    }
 
-    await prisma.activityLog.create({
-      data: {
-        userId,
-        batchId,
-        batchRecipientId,
-        eventType: "EMAIL_FAILED",
-        message: categorized.friendlyMessage,
-      },
-    })
+    if (categorized.category === "auth") {
+      await prisma.batchRecipient.update({
+        where: { id: batchRecipientId },
+        data: {
+          status: "FAILED",
+          errorLog: JSON.stringify({ raw: rawMessage, friendly: categorized.friendlyMessage, category: categorized.category }),
+        },
+      })
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          batchId,
+          batchRecipientId,
+          eventType: "EMAIL_FAILED",
+          message: categorized.friendlyMessage,
+        },
+      })
+      console.error(`[Worker] Auth failure on account ${emailAccountId}: ${rawMessage}`)
+      await updateBatchProgress(batchId)
+      return
+    }
 
-    throw sendErr
+    if (categorized.category === "quota") {
+      const backoffMs = 3600 * 1000 // 1 hour backoff
+      await job.moveToDelayed(Date.now() + backoffMs, token)
+      throw new DelayedError()
+    }
+
+    // B2 Retry loop logic for temporary/unknown errors
+    const attemptsMade = job.attemptsMade ?? 0
+    const totalAttempts = job.opts?.attempts ?? 1
+
+    if (attemptsMade + 1 < totalAttempts) {
+      await prisma.batchRecipient.update({
+        where: { id: batchRecipientId },
+        data: {
+          status: "RETRY",
+          retryCount: { increment: 1 },
+          errorLog: JSON.stringify({ raw: rawMessage, friendly: categorized.friendlyMessage, category: categorized.category }),
+        },
+      })
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          batchId,
+          batchRecipientId,
+          eventType: "EMAIL_FAILED_RETRY",
+          message: `${categorized.friendlyMessage} (Mencoba kembali...)`,
+        },
+      })
+      await updateBatchProgress(batchId)
+      throw sendErr
+    } else {
+      await prisma.batchRecipient.update({
+        where: { id: batchRecipientId },
+        data: {
+          status: "FAILED",
+          errorLog: JSON.stringify({ raw: rawMessage, friendly: categorized.friendlyMessage, category: categorized.category }),
+        },
+      })
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          batchId,
+          batchRecipientId,
+          eventType: "EMAIL_FAILED",
+          message: categorized.friendlyMessage,
+        },
+      })
+      await updateBatchProgress(batchId)
+      throw sendErr
+    }
   }
 
+  // B13 Persist refreshed credentials if they changed
+  if (tokenChanged) {
+    const { encrypt } = await import("@/lib/encryption")
+    await prisma.emailAccount.update({
+      where: { id: emailAccountId },
+      data: { oauthToken: encrypt(JSON.stringify(currentTokens)) },
+    })
+  }
+
+  // Update Recipient and batch on successful send
   await prisma.batchRecipient.update({
     where: { id: batchRecipientId },
     data: {
@@ -194,4 +311,6 @@ export async function processEmailSend(jobData: SendJobData) {
       message: `Email sent to ${recipient.hrEmail}`,
     },
   })
+
+  await updateBatchProgress(batchId)
 }
