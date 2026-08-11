@@ -1,7 +1,11 @@
 import assert from "node:assert/strict"
-import { isWithinWindow, nextWindowStart, parseActiveDays, parseTimeMinutes } from "@/lib/active-window"
+import { isWithinWindow, isWithinWindowIn, localWallClock, nextWindowStart, nextWindowStartIn, parseActiveDays, parseTimeMinutes, wallClockToInstant } from "@/lib/active-window"
 import { getSendJobId, numEnv } from "@/lib/queue"
 import { computeAutoStopRatio } from "@/lib/batch-progress"
+
+process.env.TIMEZONE = "Asia/Jakarta"
+
+const TZ = "Asia/Jakarta"
 
 let passed = 0
 
@@ -17,7 +21,7 @@ function test(name: string, fn: () => void) {
 }
 
 function date(y: number, m: number, d: number, h: number, min: number): Date {
-  return new Date(y, m - 1, d, h, min, 0, 0)
+  return wallClockToInstant(y, m, d, h, min, TZ)
 }
 
 const WEEKDAY_WINDOW = { activeHoursStart: "08:00", activeHoursEnd: "17:00", activeDays: "MON,TUE,WED,THU,FRI" }
@@ -84,23 +88,53 @@ test("overnight window (22:00-06:00)", () => {
   assert.equal(isWithinWindow(date(2026, 8, 10, 12, 0), overnight), false)
 })
 
+console.log("== active-window: Asia/Jakarta WIB boundaries ==")
+test("12:30 WIB (05:30 UTC) is inside 08:00-17:00 WIB window (reported bug)", () => {
+  const eightThirtyUtc = new Date("2026-08-11T05:30:00.000Z")
+  assert.equal(eightThirtyUtc.toISOString(), "2026-08-11T05:30:00.000Z")
+  assert.equal(isWithinWindow(eightThirtyUtc, WEEKDAY_WINDOW), true)
+})
+test("08:00 WIB is inside, 17:00 WIB is outside on Tuesday", () => {
+  assert.equal(isWithinWindow(new Date("2026-08-11T01:00:00.000Z"), WEEKDAY_WINDOW), true)
+  assert.equal(isWithinWindow(new Date("2026-08-11T10:00:00.000Z"), WEEKDAY_WINDOW), false)
+})
+test("18:00 WIB (11:00 UTC) is delayed to next day 08:00 WIB (01:00 UTC)", () => {
+  const eighteenWib = new Date("2026-08-11T11:00:00.000Z")
+  assert.equal(isWithinWindow(eighteenWib, WEEKDAY_WINDOW), false)
+  const next = nextWindowStart(eighteenWib, WEEKDAY_WINDOW)
+  assert.equal(next.toISOString(), "2026-08-12T01:00:00.000Z")
+})
+test("localhost 00:30 WIB = 17:30 UTC previous day is outside and rolls to 08:00 WIB", () => {
+  const earlier = new Date("2026-08-10T17:30:00.000Z")
+  assert.equal(isWithinWindow(earlier, WEEKDAY_WINDOW), false)
+  const next = nextWindowStart(earlier, WEEKDAY_WINDOW)
+  assert.equal(next.toISOString(), "2026-08-11T01:00:00.000Z")
+})
+test("explicit timezone parameter must behave the same as env-resolved default", () => {
+  const instant = new Date("2026-08-11T05:30:00.000Z")
+  assert.equal(isWithinWindowIn(instant, WEEKDAY_WINDOW, TZ), isWithinWindow(instant, WEEKDAY_WINDOW))
+  const nextParam = nextWindowStartIn(instant, WEEKDAY_WINDOW, TZ)
+  assert.equal(nextParam.toISOString(), nextWindowStart(instant, WEEKDAY_WINDOW).toISOString())
+})
+
 console.log("== active-window: nextWindowStart ==")
 test("same day before start", () => {
   const next = nextWindowStart(date(2026, 8, 10, 6, 0), WEEKDAY_WINDOW)
-  assert.equal(next.getDay(), 1)
-  assert.equal(next.getHours(), 8)
-  assert.equal(next.getMinutes(), 0)
+  assert.equal(next.getUTCDay(), 1)
+  assert.equal(next.getUTCHours(), 1)
+  assert.equal(next.getUTCMinutes(), 0)
 })
 test("after end on Friday rolls over weekend to Monday", () => {
   const next = nextWindowStart(date(2026, 8, 14, 18, 0), WEEKDAY_WINDOW)
-  assert.equal(next.getDay(), 1)
-  assert.equal(next.getHours(), 8)
+  assert.equal(next.getUTCDay(), 1)
+  assert.equal(next.getUTCHours(), 1)
 })
 test("day-only restriction, wrong day", () => {
   const dayOnly = { activeHoursStart: null, activeHoursEnd: null, activeDays: "1,2,3,4,5" }
   const next = nextWindowStart(date(2026, 8, 9, 10, 0), dayOnly)
-  assert.equal(next.getDay(), 1)
-  assert.equal(next.getHours(), 0)
+  const wall = localWallClock(next, TZ)
+  assert.equal(wall.getUTCDay(), 1)
+  assert.equal(wall.getUTCHours(), 0)
 })
 test("nextWindowStart always returns a future time", () => {
   const now = date(2026, 8, 10, 12, 0)
