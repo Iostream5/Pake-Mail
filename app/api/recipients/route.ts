@@ -26,7 +26,28 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     })
 
-    return apiSuccess(recipients)
+    const recipientIds = recipients.map((r) => r.id)
+    const sentRecords = recipientIds.length
+      ? await prisma.batchRecipient.findMany({
+          where: { recipientId: { in: recipientIds }, sentAt: { not: null } },
+          select: { recipientId: true, sentAt: true },
+        })
+      : []
+
+    const latestSentAt = new Map<string, Date>()
+    for (const record of sentRecords) {
+      if (!record.sentAt) continue
+      const prev = latestSentAt.get(record.recipientId)
+      if (!prev || record.sentAt > prev) latestSentAt.set(record.recipientId, record.sentAt)
+    }
+
+    return apiSuccess(
+      recipients.map((r) => ({
+        ...r,
+        contacted: latestSentAt.has(r.id),
+        lastSentAt: latestSentAt.get(r.id) ?? null,
+      }))
+    )
   })
 }
 

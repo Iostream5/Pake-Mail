@@ -33,6 +33,8 @@ interface Recipient {
   companyName: string
   hrEmail: string
   position: string | null
+  contacted: boolean
+  lastSentAt: string | null
 }
 
 const STEPS = ["Name", "Email", "Template", "Documents", "Recipients", "Schedule", "Preview"]
@@ -493,28 +495,79 @@ export function BatchWizard() {
               className="bg-obsidian-canvas border-ash-stroke text-bone focus:border-bone"
             />
             {recipients.length === 0 && <p className="text-sm text-warm-granite font-mono">No recipients found.</p>}
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-              {recipients.map((rec) => (
-                <button
-                  key={rec.id}
-                  onClick={() => toggleRecipient(rec.id)}
-                  className={cn(
-                    "w-full rounded border p-4 text-left transition-colors",
-                    selectedRecipients.includes(rec.id)
-                      ? "border-bone bg-obsidian-canvas"
-                      : "border-ash-stroke hover:border-graphite-mid bg-obsidian-canvas"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-mono text-bone">{rec.companyName}</p>
-                      <p className="text-xs font-mono text-warm-granite mt-1">{rec.hrEmail}{rec.position ? ` · ${rec.position}` : ""}</p>
-                    </div>
-                    {selectedRecipients.includes(rec.id) && <Icon name="check_box" className="text-bone" />}
-                    {!selectedRecipients.includes(rec.id) && <Icon name="check_box_outline_blank" className="text-graphite-mid" />}
-                  </div>
-                </button>
-              ))}
+            <div className="space-y-6 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+              {(() => {
+                const contacted = recipients.filter((r) => r.contacted)
+                const fresh = recipients.filter((r) => !r.contacted)
+                return (
+                  <>
+                    {fresh.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-mono uppercase tracking-widest text-metric-green">
+                          Belum pernah dikirim ({fresh.length})
+                        </p>
+                        {fresh.map((rec) => (
+                          <button
+                            key={rec.id}
+                            onClick={() => toggleRecipient(rec.id)}
+                            className={cn(
+                              "w-full rounded border p-4 text-left transition-colors",
+                              selectedRecipients.includes(rec.id)
+                                ? "border-bone bg-obsidian-canvas"
+                                : "border-ash-stroke hover:border-graphite-mid bg-obsidian-canvas"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-mono text-bone">{rec.companyName}</p>
+                                <p className="text-xs font-mono text-warm-granite mt-1">{rec.hrEmail}{rec.position ? ` · ${rec.position}` : ""}</p>
+                              </div>
+                              {selectedRecipients.includes(rec.id) && <Icon name="check_box" className="text-bone" />}
+                              {!selectedRecipients.includes(rec.id) && <Icon name="check_box_outline_blank" className="text-graphite-mid" />}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {contacted.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-mono uppercase tracking-widest text-signal-orange">
+                          Sudah pernah dikirim ({contacted.length})
+                        </p>
+                        {contacted.map((rec) => (
+                          <button
+                            key={rec.id}
+                            onClick={() => toggleRecipient(rec.id)}
+                            className={cn(
+                              "w-full rounded border p-4 text-left transition-colors",
+                              selectedRecipients.includes(rec.id)
+                                ? "border-signal-orange/50 bg-signal-orange/5"
+                                : "border-ash-stroke bg-obsidian-canvas/60 hover:border-graphite-mid"
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="text-sm font-mono text-warm-granite">{rec.companyName}</p>
+                                  <span className="rounded-[3px] bg-signal-orange/15 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-widest text-signal-orange">
+                                    Sudah dikirim
+                                  </span>
+                                </div>
+                                <p className="text-xs font-mono text-warm-granite/70 mt-1 truncate">
+                                  {rec.hrEmail}{rec.position ? ` · ${rec.position}` : ""}
+                                  {rec.lastSentAt ? ` · ${new Date(rec.lastSentAt).toLocaleDateString("id-ID")}` : ""}
+                                </p>
+                              </div>
+                              {selectedRecipients.includes(rec.id) && <Icon name="check_box" className="text-signal-orange shrink-0" />}
+                              {!selectedRecipients.includes(rec.id) && <Icon name="check_box_outline_blank" className="text-graphite-mid shrink-0" />}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
             </div>
             {selectedRecipients.length > 0 && (
               <p className="text-xs font-mono text-signal-orange">{selectedRecipients.length} recipient(s) selected</p>
