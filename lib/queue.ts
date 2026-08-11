@@ -1,5 +1,20 @@
-import { Queue, Worker, type QueueOptions } from "bullmq"
+import { Queue, Worker, type Job, type QueueOptions } from "bullmq"
 import { redis } from "@/lib/redis"
+
+export function numEnv(
+  name: string,
+  defaultValue: number,
+  range?: { min?: number; max?: number }
+): number {
+  const raw = process.env[name]
+  if (raw === undefined || raw.trim() === "") return defaultValue
+
+  const parsed = Number(raw)
+  if (!Number.isFinite(parsed)) return defaultValue
+  if (range?.min !== undefined && parsed < range.min) return defaultValue
+  if (range?.max !== undefined && parsed > range.max) return defaultValue
+  return parsed
+}
 
 const QUEUE_NAME = process.env.BULL_QUEUE_NAME ?? "email-batch-queue"
 const REPLY_QUEUE_NAME = process.env.BULL_REPLY_QUEUE_NAME ?? "reply-poll-queue"
@@ -47,10 +62,10 @@ function lazyQueue(
 
 const baseOptions = {
   defaultJobOptions: {
-    attempts: Number(process.env.BULL_MAX_RETRIES) ?? 3,
+    attempts: numEnv("BULL_MAX_RETRIES", 3, { min: 1 }),
     backoff: {
       type: "exponential",
-      delay: Number(process.env.BULL_DEFAULT_RETRY_DELAY) ?? 60000,
+      delay: numEnv("BULL_DEFAULT_RETRY_DELAY", 60000, { min: 1000 }),
     },
     removeOnComplete: { count: 100 },
     removeOnFail: { count: 50 },
@@ -86,28 +101,28 @@ export const resendExecutionQueue = lazyQueue(
   }
 )
 
-export function createEmailWorker(processor: (job: any) => Promise<void>) {
+export function createEmailWorker(processor: (job: Job) => Promise<void>) {
   return new Worker(QUEUE_NAME, processor, {
     connection: redis,
-    concurrency: Number(process.env.BULL_CONCURRENCY) ?? 5,
+    concurrency: numEnv("BULL_CONCURRENCY", 1, { min: 1 }),
   })
 }
 
-export function createReplyWorker(processor: (job: any) => Promise<void>) {
+export function createReplyWorker(processor: (job: Job) => Promise<void>) {
   return new Worker(REPLY_QUEUE_NAME, processor, {
     connection: redis,
     concurrency: 1,
   })
 }
 
-export function createResendTriggerWorker(processor: (job: any) => Promise<void>) {
+export function createResendTriggerWorker(processor: (job: Job) => Promise<void>) {
   return new Worker(RESEND_TRIGGER_QUEUE_NAME, processor, {
     connection: redis,
     concurrency: 1,
   })
 }
 
-export function createResendExecutionWorker(processor: (job: any) => Promise<void>) {
+export function createResendExecutionWorker(processor: (job: Job) => Promise<void>) {
   return new Worker(RESEND_EXECUTION_QUEUE_NAME, processor, {
     connection: redis,
     concurrency: 1,

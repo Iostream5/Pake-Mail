@@ -7,41 +7,50 @@ export async function POST(request: Request) {
     const userId = await requireUserId()
 
     const { id } = await request.json()
-  const batch = await prisma.batch.findFirst({
-    where: { id, userId },
-    include: {
-      batchRecipients: {
-        where: { status: "PENDING" },
-        include: { recipient: true },
+    const batch = await prisma.batch.findFirst({
+      where: { id, userId },
+      include: {
+        batchRecipients: {
+          where: { status: { in: ["PENDING", "RETRY"] } },
+          include: { recipient: true },
+        },
+        batchDocuments: true,
       },
-    },
-  })
+    })
 
-  if (!batch) return apiError("Batch not found", 404)
-  if (batch.status !== "PAUSED") return apiError("Can only resume a paused batch")
+    if (!batch) return apiError("Batch not found", 404)
+    if (batch.status !== "PAUSED") return apiError("Can only resume a paused batch")
 
-  const pendingRecipients = batch.batchRecipients
-  for (let i = 0; i < pendingRecipients.length; i++) {
-    const br = pendingRecipients[i]
-    await emailQueue.add(
-      `send-${br.id}`,
-      {
+    const pendingRecipients = batch.batchRecipients
+    if (pendingRecipients.length === 0) {
+      await prisma.batch.update({ where: { id }, data: { status: "COMPLETED" } })
+      return apiSuccess({ status: "COMPLETED" })
+    }
+
+    const documentIds = batch.batchDocuments.map((bd) => bd.documentId)
+
+    const jobs = pendingRecipients.map((br, i) => ({
+      name: `send:${br.id}`,
+      data: {
         batchRecipientId: br.id,
         batchId: batch.id,
         recipientId: br.recipientId,
         emailAccountId: batch.emailAccountId,
         templateId: batch.templateId,
-        documentIds: [],
+        documentIds,
+        userId,
       },
-      {
+      opts: {
+        jobId: `send:${br.id}`,
         delay: i * (batch.delaySeconds * 1000),
         attempts: batch.retryMax + 1,
-      }
-    )
-  }
+      },
+    }))
 
-  await prisma.batch.update({ where: { id }, data: { status: "RUNNING" } })
+    await emailQueue.addBulk(jobs)
 
-  return apiSuccess({ status: "RUNNING" })
+    await prisma.batch.update({ where: { id }, data: { status: "RUNNING" } })
+
+    return apiSuccess({ status: "RUNNING" })
   })
 }

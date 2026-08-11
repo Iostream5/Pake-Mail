@@ -1,10 +1,36 @@
+export type ErrorCategoryName = "temporary" | "permanent" | "quota" | "unknown" | "auth" | "attachment"
+
 interface ErrorCategory {
   friendlyMessage: string
-  category: "temporary" | "permanent" | "quota" | "unknown"
+  category: ErrorCategoryName
   suggestedAction?: string
 }
 
 const ERROR_PATTERNS: Array<{ pattern: RegExp; category: ErrorCategory }> = [
+  {
+    pattern: /invalid_grant|invalid_client|(?:token|credential).*(?:expired|invalid|revoked|disabled)/i,
+    category: {
+      friendlyMessage: "Token akses akun email kadaluarsa atau tidak valid, sambungkan ulang akun",
+      category: "auth",
+      suggestedAction: "Putuskan dan sambungkan ulang akun email di Pengaturan",
+    },
+  },
+  {
+    pattern: /auth(?:entication)?.*(?:fail|required|error)|insufficient.*permission|access.*denied/i,
+    category: {
+      friendlyMessage: "Kesalahan autentikasi akun email, sambungkan ulang akun",
+      category: "auth",
+      suggestedAction: "Putuskan dan sambungkan ulang akun email di Pengaturan",
+    },
+  },
+  {
+    pattern: /(?:attachment|file).*(?:too large|exceeds.*limit)|exceeds.*25.?mb|message.*too big/i,
+    category: {
+      friendlyMessage: "Ukuran pesan melebihi batas Gmail (25MB), lampiran terlalu besar",
+      category: "attachment",
+      suggestedAction: "Perkecil atau hapus lampiran sebelum mengirim",
+    },
+  },
   {
     pattern: /550.*(?:mailbox|user|address|account).*(?:not found|does not exist|invalid|unknown)/i,
     category: {
@@ -87,14 +113,6 @@ const ERROR_PATTERNS: Array<{ pattern: RegExp; category: ErrorCategory }> = [
     },
   },
   {
-    pattern: /authentication.*(?:fail|required|error)/i,
-    category: {
-      friendlyMessage: "Kesalahan autentikasi akun email",
-      category: "permanent",
-      suggestedAction: "Putuskan dan sambungkan ulang akun email di Pengaturan",
-    },
-  },
-  {
     pattern: /(?:dns|mx).*(?:not found|resolution|lookup)/i,
     category: {
       friendlyMessage: "Domain email tujuan tidak ditemukan",
@@ -117,6 +135,10 @@ const ERROR_PATTERNS: Array<{ pattern: RegExp; category: ErrorCategory }> = [
     },
   },
 ]
+
+export function isRetryable(category: ErrorCategoryName): boolean {
+  return category === "temporary" || category === "unknown"
+}
 
 export function categorizeError(rawError: string): ErrorCategory {
   for (const { pattern, category } of ERROR_PATTERNS) {
