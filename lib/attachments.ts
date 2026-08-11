@@ -15,6 +15,7 @@ export interface AttachmentFile {
   name: string
   buffer: Buffer
   contentType: string
+  documentId?: string
 }
 
 interface CachedFile {
@@ -109,11 +110,17 @@ export async function fetchAttachmentFile(
   }
 }
 
-export async function loadAttachmentFiles(documentIds: string[]): Promise<AttachmentFile[]> {
-  if (documentIds.length === 0) return []
+export interface AttachmentLoadResult {
+  files: AttachmentFile[]
+  documents: Array<{ id: string; name: string; category: string; fileUrl: string }>
+}
+
+export async function loadAttachmentsWithMeta(documentIds: string[]): Promise<AttachmentLoadResult> {
+  if (documentIds.length === 0) return { files: [], documents: [] }
 
   const documents = await prisma.document.findMany({
     where: { id: { in: documentIds } },
+    orderBy: { createdAt: "asc" },
   })
 
   const files: AttachmentFile[] = []
@@ -121,7 +128,7 @@ export async function loadAttachmentFiles(documentIds: string[]): Promise<Attach
     const cached = fileCache.get(doc.fileUrl)
     if (cached && Date.now() - cached.cachedAt < FILE_CACHE_TTL_MS) {
       touchCache(doc.fileUrl)
-      files.push({ name: cached.name, buffer: cached.buffer, contentType: cached.contentType })
+      files.push({ name: cached.name, buffer: cached.buffer, contentType: cached.contentType, documentId: doc.id })
       continue
     }
 
@@ -141,7 +148,7 @@ export async function loadAttachmentFiles(documentIds: string[]): Promise<Attach
       fileCache.set(doc.fileUrl, entry)
       evictCache()
 
-      files.push({ name: entry.name, buffer: entry.buffer, contentType: entry.contentType })
+      files.push({ name: entry.name, buffer: entry.buffer, contentType: entry.contentType, documentId: doc.id })
     } catch (err) {
       if (err instanceof AttachmentError) throw err
       throw new AttachmentError(
@@ -149,6 +156,19 @@ export async function loadAttachmentFiles(documentIds: string[]): Promise<Attach
       )
     }
   }
+  return {
+    files,
+    documents: documents.map((doc) => ({
+      id: doc.id,
+      name: doc.name,
+      category: doc.category,
+      fileUrl: doc.fileUrl,
+    })),
+  }
+}
+
+export async function loadAttachmentFiles(documentIds: string[]): Promise<AttachmentFile[]> {
+  const { files } = await loadAttachmentsWithMeta(documentIds)
   return files
 }
 

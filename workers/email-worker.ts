@@ -9,8 +9,10 @@ import {
   AttachmentError,
   assertMessageWithinLimit,
   buildMimeMessage,
-  loadAttachmentFiles,
+  loadAttachmentsWithMeta,
+  type AttachmentFile,
 } from "@/lib/attachments"
+import { findLetterTemplate, renderApplicationLetter } from "@/lib/letter"
 
 export interface SendJobData {
   batchRecipientId: string
@@ -69,9 +71,17 @@ function describeFailure(err: unknown): FailureInfo {
   if (err instanceof AttachmentError) {
     return { category: "attachment", friendlyMessage: err.message }
   }
+  const categorized = err as { category?: ErrorCategoryName } | null
+  if (
+    categorized?.category === "temporary" ||
+    categorized?.category === "permanent"
+  ) {
+    const message = err instanceof Error ? err.message : String(err)
+    return { category: categorized.category, friendlyMessage: message }
+  }
   const raw = err instanceof Error ? err.message : String(err)
-  const categorized = categorizeError(raw)
-  return { category: categorized.category, friendlyMessage: categorized.friendlyMessage }
+  const classified = categorizeError(raw)
+  return { category: classified.category, friendlyMessage: classified.friendlyMessage }
 }
 
 async function markFailed(
@@ -208,14 +218,32 @@ export async function processEmailSend(
       throw new Error(`Template contains unresolved variables: ${missingVars.join(", ")}`)
     }
 
-    const files = await loadAttachmentFiles(documentIds)
+    const { files: loadedFiles, documents } = await loadAttachmentsWithMeta(documentIds)
+
+    const letterTemplate = findLetterTemplate(documents)
+    let attachments: AttachmentFile[] = loadedFiles
+    if (letterTemplate) {
+      const templateFile = loadedFiles.find((f) => f.documentId === letterTemplate.id)
+      const letter = await renderApplicationLetter({
+        templateDoc: letterTemplate,
+        company: recipient.companyName,
+        position: recipient.position ?? "",
+        sendDate: batch.scheduledAt ?? new Date(),
+        docxBuffer: templateFile?.buffer,
+      })
+      attachments = [
+        { name: letter.filename, buffer: letter.pdf, contentType: "application/pdf" },
+        ...loadedFiles.filter((f) => f.documentId !== letterTemplate.id),
+      ]
+    }
+
     const raw = Buffer.from(
       buildMimeMessage({
         from: account.email,
         to: recipient.hrEmail,
         subject,
         body,
-        attachments: files,
+        attachments,
       }),
       "utf8"
     ).toString("base64url")

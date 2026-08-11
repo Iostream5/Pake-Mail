@@ -12,6 +12,7 @@ export const env = {
   STORAGE_SECRET_ACCESS_KEY: process.env.STORAGE_SECRET_ACCESS_KEY!,
   STORAGE_ENDPOINT: process.env.STORAGE_ENDPOINT!,
   STORAGE_REGION: process.env.STORAGE_REGION!,
+  GOTENBERG_URL: process.env.GOTENBERG_URL!,
   BULL_QUEUE_NAME: process.env.BULL_QUEUE_NAME ?? "email-batch-queue",
   BULL_CONCURRENCY: Number(process.env.BULL_CONCURRENCY) ?? 5,
   DEFAULT_DELAY_SECONDS: Number(process.env.DEFAULT_DELAY_SECONDS) ?? 45,
