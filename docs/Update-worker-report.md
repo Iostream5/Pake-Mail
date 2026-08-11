@@ -14,13 +14,23 @@ Refactor worker berfokus pada pipeline pengiriman email (Phase A + B + C dari do
 |---|---|
 | `workers/index.ts` | Worker Email selalu jalan; Reply, Resend Trigger, Resend Execution, Notification Batcher start hanya jika flag aktif. Cleanup scheduler (`removeJobScheduler`) saat flag mati (idempotent, try/catch). Routing outcome baru dari `processEmailSend` (completed / retry / failed / delayed). Delayed memakai `job.moveToDelayed()` + `throw new DelayedError()` (pola resmi BullMQ — moveToCompleted tidak akan salah menandai job). |
 | `workers/email-worker.ts` | Rewrite besar: guard status menerima `PENDING` + `RETRY`; guard active-window (delay, bukan gagal); per-account gate Redis; retry/klasifikasi error per B2/B12; persistensi token OAuth di-await (B13); pakai `lib/attachments.ts`; panggil `updateBatchProgress` setelah setiap state terminal. |
-| `lib/queue.ts` | `numEnv(name, default, {min,max})` baru (fix bug `Number(x) ?? y`), menggantikan semua parsing env di file ini. `BULL_CONCURRENCY` default **1**. Tipe `processor` diganti `any` → `Job` (lint bersih). |
+| `lib/queue.ts` | `numEnv(name, default, {min,max})` baru (fix bug `Number(x) ?? y`), menggantikan semua parsing env di file ini. `BULL_CONCURRENCY` default **1**. Tipe `processor` diganti `any` → `Job` (lint bersih). **+ `getSendJobId(batchRecipientId)` → `"send-<id>"`** (hotfix, lihat bagian Hotfix di bawah). |
 | `lib/email-errors.ts` | Kategori baru `auth` dan `attachment` + `isRetryable(category)` (temporary/unknown = retryable). Pola auth/invalid_grant/attachment size ditambahkan. |
-| `app/api/batches/start/route.ts` | Satu `emailQueue.addBulk()`, `opts.jobId = "send:<batchRecipientId>"`, `attempts = retryMax + 1`, delay kumulatif tetap, wrapper `withTimeout` 10s dihapus. Status `RUNNING` juga boleh di-start ulang (idempoten, no-op via jobId deterministik). |
-| `app/api/batches/resume/route.ts` | Re-query dengan `batchDocuments` (fix lampiran hilang) + `userId` (fix `activityLog.create` rusak), rebuild data job lengkap via `addBulk` dengan jobId deterministik dan spacing `delaySeconds`. Menerima PENDING + RETRY. Jika tidak ada recipient tersisa → `COMPLETED` (menghilangkan dead-end "RUNNING tanpa job"). |
-| `app/api/batches/pause/route.ts` | Hapus job via ID asli `emailQueue.remove("send:<brId>")` untuk PENDING + RETRY (perbaikan dari `send-<id>` yang tidak pernah cocok). |
-| `app/api/batches/stop/route.ts` | PENDING/RETRY → `SKIPPED` **dan** job-nya dihapus dari Redis oleh ID. |
+| `app/api/batches/start/route.ts` | Satu `emailQueue.addBulk()`, `opts.jobId = getSendJobId(batchRecipientId)` → `"send-<batchRecipientId>"`, `attempts = retryMax + 1`, delay kumulatif tetap, wrapper `withTimeout` 10s dihapus. Status `RUNNING` juga boleh di-start ulang (idempoten, no-op via jobId deterministik). |
+| `app/api/batches/resume/route.ts` | Re-query dengan `batchDocuments` (fix lampiran hilang) + `userId` (fix `activityLog.create` rusak), rebuild data job lengkap via `addBulk` dengan jobId deterministik (`getSendJobId`) dan spacing `delaySeconds`. Menerima PENDING + RETRY. Jika tidak ada recipient tersisa → `COMPLETED` (menghilangkan dead-end "RUNNING tanpa job"). |
+| `app/api/batches/pause/route.ts` | Hapus job via ID asli `emailQueue.remove(getSendJobId(br.id))` untuk PENDING + RETRY (perbaikan dari `send-<id>` yang tidak pernah cocok). |
+| `app/api/batches/stop/route.ts` | PENDING/RETRY → `SKIPPED` **dan** job-nya dihapus dari Redis oleh ID (`getSendJobId`). |
 | `.env.example` | `BULL_CONCURRENCY=1`, flag worker baru (default false) didokumentasikan. |
+
+## Hotfix: BullMQ "Custom Id cannot contain :" (2026-08-11)
+
+**Error produksi:** `Error: Custom Id cannot contain :` di `addJob`/`createBulk` — BullMQ menolak karakter `:` pada custom job ID. Job ID `"send:<batchRecipientId>"` yang dipakai refactor menyebabkan `emailQueue.addBulk()` gagal.
+
+**Perbaikan:** Format diganti ke `"send-<batchRecipientId>"` melalui satu helper tunggal `getSendJobId(batchRecipientId)` (baru, di `lib/queue.ts`). Tidak ada lagi literal format job ID di file lain — semua create/remove/lookup memakai helper yang sama. Strategi idempotensi (satu BatchRecipient → satu job ID deterministik, double-start no-op, pause/stop/Auto-Stop tetap bisa hapus job) **tidak diubah**. Schema DB, konfigurasi Redis, dan perilaku kirim Gmail tidak disentuh.
+
+**File yang diubah (hotfix):** `lib/queue.ts` (helper baru), `app/api/batches/start/route.ts`, `app/api/batches/resume/route.ts`, `app/api/batches/pause/route.ts`, `app/api/batches/stop/route.ts`, `lib/batch-progress.ts`, `tests/worker-logic.test.ts` (+2 test `getSendJobId`).
+
+**Verifikasi:** `grep -rn "send:" lib workers app prisma` → tidak ada sisa di kode aktif (satu-satunya `send-lock:<accountId>` adalah **key Redis** untuk per-account gate, bukan BullMQ job ID, sengaja dipertahankan). `npx tsc --noEmit` ✅, `npm run lint` ✅ (60 problems — semua pre-existing di file tak tersentuh), `npm run build` ✅, unit test ✅ 34/34.
 
 ## File Baru (5)
 
@@ -30,7 +40,7 @@ Refactor worker berfokus pada pipeline pengiriman email (Phase A + B + C dari do
 | `lib/active-window.ts` | `parseTimeMinutes`, `parseActiveDays` (dukung format `"MON,TUE"` dan `"1,2,3,4,5"`), `isWithinWindow(now, batch)`, `nextWindowStart(now, batch)`. Null field = selalu boleh. Mendukung window melewati tengah malam (start > end). |
 | `lib/batch-progress.ts` | `updateBatchProgress(batchId)`: satu `groupBy` status per panggilan; **COMPLETED** bila tanpa PENDING/RETRY dan batch RUNNING (+1 activityLog); **Auto-Stop**: `FAILED/(SENT+FAILED) > autoStopThreshold` (fraksi), gerbang minimal **10** recipient diproses, batch → STOPPED (guarded re-read via `updateMany`), sisa → SKIPPED + job dihapus + 1 activityLog. `computeAutoStopRatio` di-export untuk unit test. |
 | `lib/attachments.ts` | `loadAttachmentFiles` (satu `findMany`, cache per storage key TTL ~10 menit, total-bytes cap 128MB dengan eviction LRU, `!res.ok` → `AttachmentError`), `encodeMimeWord` (helper tunggal), `buildMimeMessage` (MIME `\r\n` RFC 5322), `assertMessageWithinLimit` (batas Gmail 25MB, error permanen jelas). |
-| `tests/worker-logic.test.ts` | 32 unit test murni (jalan via `npx tsx tests/worker-logic.test.ts`, tanpa framework tambahan). |
+| `tests/worker-logic.test.ts` | 34 unit test murni (jalan via `npx tsx tests/worker-logic.test.ts`, tanpa framework tambahan). |
 
 ## Alur Routing Error Worker (B2 + B12)
 

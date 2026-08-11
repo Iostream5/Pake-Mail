@@ -1,6 +1,10 @@
 import { Queue, Worker, type Job, type QueueOptions } from "bullmq"
 import { redis } from "@/lib/redis"
 
+export function getSendJobId(batchRecipientId: string): string {
+  return `send-${batchRecipientId}`
+}
+
 export function numEnv(
   name: string,
   defaultValue: number,

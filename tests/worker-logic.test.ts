@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { isWithinWindow, nextWindowStart, parseActiveDays, parseTimeMinutes } from "@/lib/active-window"
-import { numEnv } from "@/lib/queue"
+import { getSendJobId, numEnv } from "@/lib/queue"
 import { computeAutoStopRatio } from "@/lib/batch-progress"
 
 let passed = 0
@@ -136,6 +136,17 @@ test("valid value parses", () => {
 test("float value parses", () => {
   process.env.TEST_NUM_ENV = "3.5"
   assert.equal(numEnv("TEST_NUM_ENV", 1), 3.5)
+})
+
+console.log("== send job id (BullMQ custom id) ==")
+test("getSendJobId uses dash, never a colon", () => {
+  const id = getSendJobId("br_123")
+  assert.equal(id, "send-br_123")
+  assert.ok(!id.includes(":"), "BullMQ rejects ':' in custom job IDs")
+})
+test("getSendJobId is deterministic", () => {
+  assert.equal(getSendJobId("abc"), getSendJobId("abc"))
+  assert.notEqual(getSendJobId("abc"), getSendJobId("def"))
 })
 
 console.log("== auto-stop ratio ==")

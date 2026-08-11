@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { emailQueue } from "@/lib/queue"
+import { emailQueue, getSendJobId } from "@/lib/queue"
 
 export const MIN_AUTO_STOP_SAMPLE = 10
 
@@ -58,7 +58,7 @@ export async function updateBatchProgress(batchId: string): Promise<void> {
         data: { status: "SKIPPED" },
       })
       await Promise.all(
-        remaining.map((r) => emailQueue.remove(`send:${r.id}`).catch(() => {}))
+        remaining.map((r) => emailQueue.remove(getSendJobId(r.id)).catch(() => {}))
       )
     }
 

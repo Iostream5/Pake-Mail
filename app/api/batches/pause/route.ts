@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { requireUserId, handleApi, apiSuccess, apiError } from "@/lib/api-helpers"
-import { emailQueue } from "@/lib/queue"
+import { emailQueue, getSendJobId } from "@/lib/queue"
 
 export async function POST(request: Request) {
   return handleApi(async () => {
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     })
 
     const removals = pendingRecipients.map((br) =>
-      emailQueue.remove(`send:${br.id}`).catch(() => {})
+      emailQueue.remove(getSendJobId(br.id)).catch(() => {})
     )
     await Promise.all(removals)
 
