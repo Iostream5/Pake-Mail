@@ -4,6 +4,8 @@ import { getSignedFileUrl } from "@/lib/storage"
 const GMAIL_MESSAGE_LIMIT_BYTES = 25 * 1024 * 1024
 const FILE_CACHE_TTL_MS = 10 * 60 * 1000
 const FILE_CACHE_MAX_BYTES = 128 * 1024 * 1024
+const FALLBACK_CONTENT_TYPE = "application/octet-stream"
+const MAX_FILENAME_LENGTH = 255
 
 export class AttachmentError extends Error {
   readonly category = "attachment" as const
@@ -12,6 +14,7 @@ export class AttachmentError extends Error {
 export interface AttachmentFile {
   name: string
   buffer: Buffer
+  contentType: string
 }
 
 interface CachedFile {
@@ -19,6 +22,7 @@ interface CachedFile {
   buffer: Buffer
   sizeBytes: number
   cachedAt: number
+  contentType: string
 }
 
 const fileCache = new Map<string, CachedFile>()
@@ -44,6 +48,67 @@ function evictCache(): void {
   }
 }
 
+export function contentTypeFromHeader(header: string | null): string | null {
+  if (!header) return null
+  const normalized = header.trim().toLowerCase()
+  if (normalized.length === 0) return null
+  const withoutParams = normalized.split(";")[0].trim()
+  return withoutParams.length === 0 ? null : withoutParams
+}
+
+export function safeFilename(name: string): string {
+  let cleaned = String(name ?? "")
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/"/g, " ")
+    .trim()
+  if (cleaned.length === 0) cleaned = "attachment"
+  return cleaned.slice(0, MAX_FILENAME_LENGTH)
+}
+
+export function asciiFilename(name: string): string {
+  return safeFilename(name).replace(/[^\x20-\x7e]/g, "_")
+}
+
+export interface AttachmentFetchResult {
+  buffer: Buffer
+  contentType: string
+}
+
+export async function fetchAttachmentFile(
+  url: string,
+  docName: string,
+  fetcher: typeof fetch = fetch
+): Promise<AttachmentFetchResult> {
+  let response: Response
+  try {
+    response = await fetcher(url)
+  } catch (err) {
+    throw new AttachmentError(
+      `Gagal mengunduh lampiran "${docName}": ${err instanceof Error ? err.message : String(err)}`
+    )
+  }
+
+  if (!response.ok) {
+    throw new AttachmentError(
+      `Gagal mengunduh lampiran "${docName}": server storage merespon HTTP ${response.status}`
+    )
+  }
+
+  let buffer: Buffer
+  try {
+    buffer = Buffer.from(await response.arrayBuffer())
+  } catch (err) {
+    throw new AttachmentError(
+      `Gagal mengunduh lampiran "${docName}": ${err instanceof Error ? err.message : String(err)}`
+    )
+  }
+
+  return {
+    buffer,
+    contentType: contentTypeFromHeader(response.headers.get("content-type")) ?? FALLBACK_CONTENT_TYPE,
+  }
+}
+
 export async function loadAttachmentFiles(documentIds: string[]): Promise<AttachmentFile[]> {
   if (documentIds.length === 0) return []
 
@@ -56,37 +121,43 @@ export async function loadAttachmentFiles(documentIds: string[]): Promise<Attach
     const cached = fileCache.get(doc.fileUrl)
     if (cached && Date.now() - cached.cachedAt < FILE_CACHE_TTL_MS) {
       touchCache(doc.fileUrl)
-      files.push({ name: cached.name, buffer: cached.buffer })
+      files.push({ name: cached.name, buffer: cached.buffer, contentType: cached.contentType })
       continue
     }
 
-    const url = await getSignedFileUrl(doc.fileUrl)
-    const response = await fetch(url)
-    if (!response.ok) {
+    try {
+      const url = await getSignedFileUrl(doc.fileUrl)
+      const fetched = await fetchAttachmentFile(url, doc.name)
+      const entry: CachedFile = {
+        name: doc.name,
+        buffer: fetched.buffer,
+        sizeBytes: fetched.buffer.byteLength,
+        cachedAt: Date.now(),
+        contentType: fetched.contentType,
+      }
+
+      if (cached) cacheBytes -= cached.sizeBytes
+      cacheBytes += entry.sizeBytes
+      fileCache.set(doc.fileUrl, entry)
+      evictCache()
+
+      files.push({ name: entry.name, buffer: entry.buffer, contentType: entry.contentType })
+    } catch (err) {
+      if (err instanceof AttachmentError) throw err
       throw new AttachmentError(
-        `Gagal mengunduh lampiran "${doc.name}": server storage merespon HTTP ${response.status}`
+        `Gagal mengunduh lampiran "${doc.name}": ${err instanceof Error ? err.message : String(err)}`
       )
     }
-    const buffer = Buffer.from(await response.arrayBuffer())
-    const entry: CachedFile = {
-      name: doc.name,
-      buffer,
-      sizeBytes: buffer.byteLength,
-      cachedAt: Date.now(),
-    }
-
-    if (cached) cacheBytes -= cached.sizeBytes
-    cacheBytes += entry.sizeBytes
-    fileCache.set(doc.fileUrl, entry)
-    evictCache()
-
-    files.push({ name: entry.name, buffer: entry.buffer })
   }
   return files
 }
 
 export function encodeMimeWord(text: string): string {
   return `=?UTF-8?B?${Buffer.from(text, "utf8").toString("base64")}?=`
+}
+
+function percentEncodeFilename(name: string): string {
+  return encodeURIComponent(safeFilename(name))
 }
 
 export function buildMimeMessage(opts: {
@@ -112,10 +183,11 @@ export function buildMimeMessage(opts: {
   ]
 
   for (const attachment of opts.attachments ?? []) {
+    const name = safeFilename(attachment.name)
     parts.push(
       `--${boundary}`,
-      "Content-Type: application/octet-stream",
-      `Content-Disposition: attachment; filename="${encodeMimeWord(attachment.name)}"`,
+      `Content-Type: ${attachment.contentType}`,
+      `Content-Disposition: attachment; filename="${asciiFilename(name)}"; filename*=UTF-8''${percentEncodeFilename(name)}`,
       "Content-Transfer-Encoding: base64",
       "",
       attachment.buffer.toString("base64")
