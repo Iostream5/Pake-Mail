@@ -58,11 +58,12 @@ export async function convertDocxToPdf(
   }
 
   const base = gotenbergUrl()
+  const uploadFilename = /\.docx$/i.test(filename) ? filename : `${filename}.docx`
   const form = new FormData()
   const blob = new Blob([new Uint8Array(docxBuffer)], {
     type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   })
-  form.append("files", blob, filename)
+  form.append("files", blob, uploadFilename)
 
   let response: Response
   try {

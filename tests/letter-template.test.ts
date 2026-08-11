@@ -9,6 +9,7 @@ import {
   type TemplateVariables,
 } from "@/lib/document-template"
 import {
+  convertDocxToPdf,
   GotenbergConversionError,
   GotenbergUnavailableError,
 } from "@/lib/gotenberg"
@@ -349,6 +350,24 @@ test("conversion HTTP failure is permanent", async () => {
     ),
     (err) => err instanceof GotenbergConversionError && err.category === "permanent"
   )
+})
+test("multipart uses field 'files' with a filename ending in .docx", async () => {
+  const seen = new Set<string>()
+  const captureFetcher: typeof fetch = async (_input, init) => {
+    const form = init?.body as FormData
+    const file = form.get("files")
+    assert.ok(file instanceof File, "form field 'files' must be a file")
+    assert.ok(file.name.endsWith(".docx"), `multipart filename must end with .docx, got ${file.name}`)
+    seen.add(file.name)
+    return new Response(new Uint8Array(PDF_BYTES), {
+      status: 200,
+      headers: { "content-type": "application/pdf" },
+    })
+  }
+  await convertDocxToPdf(FULL_TEMPLATE, "Template Lamaran", captureFetcher)
+  await convertDocxToPdf(FULL_TEMPLATE, "Template Lamaran.docx", captureFetcher)
+  await convertDocxToPdf(FULL_TEMPLATE, "Template.foo", captureFetcher)
+  assert.deepEqual([...seen].sort(), ["Template Lamaran.docx", "Template.foo.docx"])
 })
 test("non-pdf response is permanent", async () => {
   await assert.rejects(
